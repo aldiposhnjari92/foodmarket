@@ -32,7 +32,10 @@ export function BarcodeScanner({ onDetect }: BarcodeScannerProps) {
       readerRef.current = reader;
 
       try {
-        const devices = await BrowserMultiFormatReader.listVideoInputDevices();
+        const allDevices = await navigator.mediaDevices.enumerateDevices();
+        const devices = allDevices
+          .filter((d) => d.kind === "videoinput")
+          .map((d) => ({ deviceId: d.deviceId, label: d.label } as MediaDeviceInfo));
         if (devices.length === 0) {
           setError("No camera found on this device.");
           return;
