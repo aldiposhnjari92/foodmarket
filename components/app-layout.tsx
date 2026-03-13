@@ -3,23 +3,26 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, ScanLine, LogOut, Menu, ShoppingBasket, Loader2 } from "lucide-react";
+import { LayoutDashboard, Package, ScanLine, LogOut, Menu, ShoppingBasket, Loader2, Globe } from "lucide-react";
 import { getCurrentUser, logout } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/products", label: "Products", icon: Package },
-  { href: "/scan", label: "Scan Product", icon: ScanLine },
-];
+import { useLanguage } from "@/contexts/language-context";
+import type { Locale } from "@/lib/i18n";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { locale, setLocale, t } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navItems = [
+    { href: "/dashboard", label: t.navDashboard, icon: LayoutDashboard },
+    { href: "/products", label: t.navProducts, icon: Package },
+    { href: "/scan", label: t.navScanProduct, icon: ScanLine },
+  ];
 
   useEffect(() => {
     getCurrentUser().then((u) => {
@@ -64,7 +67,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       >
         <div className="flex items-center gap-2 border-b border-border px-5 py-4">
           <ShoppingBasket className="size-5 text-primary" />
-          <span className="text-lg font-bold">Food Market</span>
+          <span className="text-lg font-bold">{t.appName}</span>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
@@ -96,8 +99,27 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             <LogOut className="size-4" />
-            Sign out
+            {t.signOut}
           </button>
+
+          {/* Language switcher */}
+          <div className="mt-3 flex items-center gap-2 px-1">
+            <Globe className="size-3.5 text-muted-foreground shrink-0" />
+            {(["en", "sq"] as Locale[]).map((l) => (
+              <button
+                key={l}
+                onClick={() => setLocale(l)}
+                className={cn(
+                  "rounded px-2 py-0.5 text-xs font-medium transition-colors",
+                  locale === l
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
       </aside>
 
@@ -111,7 +133,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           >
             <Menu className="size-5" />
           </button>
-          <span className="font-semibold">Food Market</span>
+          <span className="font-semibold">{t.appName}</span>
         </header>
 
         <main className="flex-1 overflow-y-auto p-6">{children}</main>

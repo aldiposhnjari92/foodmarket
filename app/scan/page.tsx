@@ -9,12 +9,14 @@ import { BarcodeScanner } from "@/components/barcode-scanner";
 import { createProduct } from "@/lib/products";
 import { uploadProductImage } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 
 type Mode = "barcode" | "photo";
 type Step = "scan" | "confirm";
 
 export default function ScanPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [mode, setMode] = useState<Mode>("barcode");
   const [step, setStep] = useState<Step>("scan");
 
@@ -37,7 +39,7 @@ export default function ScanPage() {
 
   const handleBarcodeDetect = async (barcode: string) => {
     setLookingUp(true);
-    setProductName(barcode); // fallback while looking up
+    setProductName(barcode);
     try {
       const res = await fetch(`/api/lookup-barcode?barcode=${encodeURIComponent(barcode)}`);
       const data = await res.json();
@@ -60,8 +62,8 @@ export default function ScanPage() {
     setError(null);
 
     const parsedPrice = parseFloat(price);
-    if (!productName.trim()) { setError("Product name is required."); return; }
-    if (isNaN(parsedPrice) || parsedPrice < 0) { setError("Enter a valid price."); return; }
+    if (!productName.trim()) { setError(t.errNameRequired); return; }
+    if (isNaN(parsedPrice) || parsedPrice < 0) { setError(t.errValidPrice); return; }
 
     setSaving(true);
     try {
@@ -72,7 +74,7 @@ export default function ScanPage() {
       await createProduct(productName.trim(), parsedPrice, imageId);
       router.push("/products");
     } catch {
-      setError("Failed to save product. Please try again.");
+      setError(t.errSaveFailed);
       setSaving(false);
     }
   };
@@ -82,18 +84,15 @@ export default function ScanPage() {
       <div className="mx-auto max-w-lg">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">
-            {step === "scan" ? "Add Product" : "Confirm Product"}
+            {step === "scan" ? t.addProductTitle : t.confirmProduct}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {step === "scan"
-              ? "Scan a barcode or take a photo to add a product."
-              : "Fill in the details and save."}
+            {step === "scan" ? t.scanDesc : t.confirmDesc}
           </p>
         </div>
 
         {step === "scan" && (
           <>
-            {/* Mode tabs */}
             <div className="mb-5 flex overflow-hidden rounded-xl border border-border">
               {(["barcode", "photo"] as Mode[]).map((m) => (
                 <button
@@ -107,7 +106,7 @@ export default function ScanPage() {
                   )}
                 >
                   {m === "barcode" ? <Barcode className="size-4" /> : <Camera className="size-4" />}
-                  {m === "barcode" ? "Scan Barcode" : "Take Photo"}
+                  {m === "barcode" ? t.scanBarcode : t.takePhoto}
                 </button>
               ))}
             </div>
@@ -115,7 +114,7 @@ export default function ScanPage() {
             {lookingUp ? (
               <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
                 <Loader2 className="size-5 animate-spin" />
-                <span className="text-sm">Looking up product…</span>
+                <span className="text-sm">{t.lookingUp}</span>
               </div>
             ) : mode === "barcode" ? (
               <BarcodeScanner onDetect={handleBarcodeDetect} />
@@ -134,12 +133,12 @@ export default function ScanPage() {
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">Product Name</label>
+              <label className="text-sm font-medium">{t.productName}</label>
               <input
                 type="text"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g. Whole Milk 1L"
+                placeholder={t.productNamePlaceholder}
                 className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                 required
                 autoFocus
@@ -147,7 +146,7 @@ export default function ScanPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">Price ($)</label>
+              <label className="text-sm font-medium">{t.priceLabel}</label>
               <input
                 type="number"
                 value={price}
@@ -172,7 +171,7 @@ export default function ScanPage() {
                 onClick={() => setStep("scan")}
                 className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-muted transition-colors"
               >
-                {mode === "barcode" ? "Rescan" : "Retake"}
+                {mode === "barcode" ? t.rescan : t.retake}
               </button>
               <button
                 type="submit"
@@ -183,9 +182,9 @@ export default function ScanPage() {
                 )}
               >
                 {saving ? (
-                  <><Loader2 className="size-4 animate-spin" /> Saving…</>
+                  <><Loader2 className="size-4 animate-spin" /> {t.saving}</>
                 ) : (
-                  <><CheckCircle2 className="size-4" /> Save Product</>
+                  <><CheckCircle2 className="size-4" /> {t.saveProduct}</>
                 )}
               </button>
             </div>

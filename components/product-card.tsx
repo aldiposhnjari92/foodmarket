@@ -5,6 +5,7 @@ import { Trash2 } from "lucide-react";
 import { Product } from "@/lib/products";
 import { getProductImageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 
 interface ProductCardProps {
   product: Product;
@@ -14,8 +15,9 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onDelete, deleting }: ProductCardProps) {
   const [confirming, setConfirming] = useState(false);
+  const { t } = useLanguage();
 
-  const date = new Date(product.$createdAt).toLocaleDateString("en-US", {
+  const date = new Date(product.$createdAt).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -51,18 +53,18 @@ export function ProductCard({ product, onDelete, deleting }: ProductCardProps) {
 
       {confirming ? (
         <div className="flex items-center justify-end gap-2">
-          <span className="text-xs text-muted-foreground">Delete this product?</span>
+          <span className="text-xs text-muted-foreground">{t.deleteThisProduct}</span>
           <button
             onClick={() => setConfirming(false)}
             className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
           >
-            Cancel
+            {t.cancel}
           </button>
           <button
             onClick={() => onDelete(product.$id)}
             className="rounded-lg px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
           >
-            Delete
+            {t.delete}
           </button>
         </div>
       ) : (
@@ -71,7 +73,7 @@ export function ProductCard({ product, onDelete, deleting }: ProductCardProps) {
           className="flex items-center gap-1.5 self-end rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
         >
           <Trash2 className="size-3.5" />
-          Remove
+          {t.remove}
         </button>
       )}
     </div>

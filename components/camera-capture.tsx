@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 
 interface CameraCaptureProps {
   onCapture: (imageDataUrl: string) => void;
@@ -12,13 +13,13 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const { t } = useLanguage();
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [retryCount, setRetryCount] = useState(0);
 
-  // Initialize camera stream and handle cleanup
   useEffect(() => {
     let cancelled = false;
 
@@ -43,7 +44,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
         }
       } catch {
         if (!cancelled) {
-          setError("Could not access the camera. Please allow camera permissions.");
+          setError(t.cameraError);
         }
       }
     }
@@ -54,7 +55,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
       cancelled = true;
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [facingMode, retryCount]);
+  }, [facingMode, retryCount, t]);
 
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -74,7 +75,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-black aspect-[4/3]">
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-black aspect-4/3">
         {error ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-white">
             <Camera className="size-10 opacity-50" />
@@ -83,7 +84,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
               onClick={() => setRetryCount((n) => n + 1)}
               className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30 transition-colors"
             >
-              Retry
+              {t.retry}
             </button>
           </div>
         ) : (
@@ -99,7 +100,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
         <button
           onClick={() => setFacingMode((prev) => (prev === "environment" ? "user" : "environment"))}
           className="absolute top-3 right-3 rounded-full bg-black/40 p-2 text-white hover:bg-black/60 transition-colors"
-          title="Switch camera"
+          title={t.switchCamera}
         >
           <RotateCcw className="size-4" />
         </button>
@@ -118,7 +119,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
         )}
       >
         <Camera className="size-5" />
-        Capture Photo
+        {t.capturePhoto}
       </button>
     </div>
   );

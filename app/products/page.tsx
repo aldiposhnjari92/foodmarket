@@ -5,9 +5,13 @@ import Link from "next/link";
 import { ScanLine, Trash2, Package, Loader2, Search } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { getProducts, deleteProduct, Product } from "@/lib/products";
+import { getProductImageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function ProductsPage() {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -40,17 +44,15 @@ export default function ProductsPage() {
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Products</h1>
-            <p className="text-sm text-muted-foreground">
-              {products.length} item{products.length !== 1 ? "s" : ""} in stock
-            </p>
+            <h1 className="text-2xl font-bold">{t.navProducts}</h1>
+            <p className="text-sm text-muted-foreground">{t.itemsInStock(products.length)}</p>
           </div>
           <Link
             href="/scan"
             className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <ScanLine className="size-4" />
-            Add Product
+            {t.addProduct}
           </Link>
         </div>
 
@@ -58,7 +60,7 @@ export default function ProductsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search products…"
+            placeholder={t.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-xl border border-input bg-background pl-9 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all placeholder:text-muted-foreground"
@@ -69,10 +71,11 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Name</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Price</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground w-10" />
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.colName}</th>
+                <th className="px-4 py-3 text-right font-medium text-muted-foreground">{t.colPrice}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">
-                  Date Added
+                  {t.colDateAdded}
                 </th>
                 <th className="px-4 py-3" />
               </tr>
@@ -80,17 +83,17 @@ export default function ProductsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-14 text-center text-muted-foreground">
+                  <td colSpan={5} className="px-4 py-14 text-center text-muted-foreground">
                     <Loader2 className="inline size-5 animate-spin" />
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-14 text-center">
+                  <td colSpan={5} className="px-4 py-14 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Package className="size-8 opacity-40" />
                       <p className="text-sm">
-                        {search ? `No products matching "${search}"` : "No products yet. Scan one to add it!"}
+                        {search ? t.noProductsMatching(search) : t.noProductsAdd}
                       </p>
                     </div>
                   </td>
@@ -104,6 +107,22 @@ export default function ProductsPage() {
                       i % 2 !== 0 && "bg-muted/10"
                     )}
                   >
+                    <td className="px-4 py-3">
+                      {product.image_id ? (
+                        <div className="relative size-15 rounded-md overflow-hidden shrink-0">
+                          <Image
+                            src={getProductImageUrl(product.image_id)}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="size-15 rounded-md bg-muted flex items-center justify-center">
+                          <Package className="size-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-3 font-medium">
                       <Link href={`/products/${product.$id}`} className="hover:text-primary hover:underline transition-colors">
                         {product.name}
@@ -111,7 +130,7 @@ export default function ProductsPage() {
                     </td>
                     <td className="px-4 py-3 text-right">${product.price.toFixed(2)}</td>
                     <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
-                      {new Date(product.$createdAt).toLocaleDateString("en-US", {
+                      {new Date(product.$createdAt).toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
                         year: "numeric",

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RotateCcw, Loader2 } from "lucide-react";
 import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
+import { useLanguage } from "@/contexts/language-context";
 
 interface BarcodeScannerProps {
   onDetect: (barcode: string) => void;
@@ -12,6 +13,7 @@ export function BarcodeScanner({ onDetect }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const detectedRef = useRef(false);
+  const { t } = useLanguage();
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,12 +39,11 @@ export function BarcodeScanner({ onDetect }: BarcodeScannerProps) {
           .filter((d) => d.kind === "videoinput")
           .map((d) => ({ deviceId: d.deviceId, label: d.label } as MediaDeviceInfo));
         if (devices.length === 0) {
-          setError("No camera found on this device.");
+          setError(t.noCameraFound);
           return;
         }
         setCameras(devices);
 
-        // Prefer back camera by default
         const selectedId =
           deviceId ??
           (devices.find((d) =>
@@ -59,17 +60,17 @@ export function BarcodeScanner({ onDetect }: BarcodeScannerProps) {
               onDetect(result.getText());
             }
             if (err && !(err instanceof NotFoundException)) {
-              // ignore NotFoundException — it just means no barcode in frame yet
+              // ignore NotFoundException — no barcode in frame yet
             }
           }
         );
 
         setIsStreaming(true);
       } catch {
-        setError("Could not access the camera. Please allow camera permissions.");
+        setError(t.cameraError);
       }
     },
-    [onDetect]
+    [onDetect, t]
   );
 
   useEffect(() => {
@@ -102,14 +103,13 @@ export function BarcodeScanner({ onDetect }: BarcodeScannerProps) {
               onClick={() => startScanning()}
               className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30 transition-colors"
             >
-              Retry
+              {t.retry}
             </button>
           </div>
         )}
 
         <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
 
-        {/* Targeting frame overlay */}
         {isStreaming && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="relative w-3/4 h-1/3">
@@ -126,7 +126,7 @@ export function BarcodeScanner({ onDetect }: BarcodeScannerProps) {
           <button
             onClick={switchCamera}
             className="absolute top-3 right-3 rounded-full bg-black/40 p-2 text-white hover:bg-black/60 transition-colors"
-            title="Switch camera"
+            title={t.switchCamera}
           >
             <RotateCcw className="size-4" />
           </button>
@@ -134,7 +134,7 @@ export function BarcodeScanner({ onDetect }: BarcodeScannerProps) {
       </div>
 
       <p className="text-sm text-muted-foreground text-center">
-        Align the barcode within the frame — it detects automatically
+        {t.barcodeInstructions}
       </p>
     </div>
   );
