@@ -1,8 +1,18 @@
 import { storage, BUCKET_ID, ID } from "./appwrite";
 
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [header, base64] = dataUrl.split(",");
+  const mime = header.match(/:(.*?);/)?.[1] ?? "image/jpeg";
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mime });
+}
+
 export async function uploadProductImage(dataUrl: string): Promise<string> {
-  const response = await fetch(dataUrl);
-  const blob = await response.blob();
+  const blob = dataUrlToBlob(dataUrl);
   const file = new File([blob], `product-${Date.now()}.jpg`, { type: "image/jpeg" });
 
   const result = await storage.createFile({
@@ -14,7 +24,5 @@ export async function uploadProductImage(dataUrl: string): Promise<string> {
 }
 
 export function getProductImageUrl(fileId: string): string {
-  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
-  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
-  return `${endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${projectId}`;
+  return storage.getFileView({ bucketId: BUCKET_ID, fileId }).toString();
 }
