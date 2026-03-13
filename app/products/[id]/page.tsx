@@ -9,6 +9,17 @@ import { getProduct, updateProduct, deleteProduct, Product } from "@/lib/product
 import { getProductImageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import Image from "next/image";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function ProductDetailPage() {
   const router = useRouter();
@@ -26,6 +37,7 @@ export default function ProductDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     getProduct(id)
@@ -48,11 +60,24 @@ export default function ProductDetailPage() {
   const handleSave = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaveError(null);
+
     const parsedPrice = parseFloat(price);
     const parsedQty = parseInt(qty, 10);
-    if (!name.trim()) { setSaveError(t.nameRequired); return; }
-    if (isNaN(parsedPrice) || parsedPrice < 0) { setSaveError(t.errValidPrice); return; }
-    if (isNaN(parsedQty) || parsedQty < 0) { setSaveError(t.errValidPrice); return; }
+
+    if (!name.trim()) {
+      setSaveError(t.nameRequired);
+      return;
+    }
+
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      setSaveError(t.errValidPrice);
+      return;
+    }
+
+    if (isNaN(parsedQty) || parsedQty < 0) {
+      setSaveError(t.errValidPrice);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -68,13 +93,15 @@ export default function ProductDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm(t.deleteConfirm(product?.name ?? ""))) return;
+    if (!product) return;
+
     setDeleting(true);
     try {
-      await deleteProduct(id, product?.image_id);
+      await deleteProduct(id, product.image_id);
       router.push("/products");
     } catch {
       setDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -106,14 +133,16 @@ export default function ProductDetailPage() {
           <div className="flex flex-col gap-6">
             {product!.image_id ? (
               <div className="overflow-hidden rounded-2xl border border-border aspect-4/3">
-                <img
+                <Image
                   src={getProductImageUrl(product!.image_id)}
                   alt={product!.name}
                   className="h-full w-full object-cover"
+                  width={400}
+                  height={300}
                 />
               </div>
             ) : (
-              <div className="flex aspect-4/3 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30">
+              <div className="flex w-full h-40 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30">
                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                   <Package className="size-10 opacity-30" />
                   <p className="text-xs">{t.noPhoto}</p>
@@ -144,7 +173,9 @@ export default function ProductDetailPage() {
               </div>
               <div className="rounded-2xl border border-border bg-card p-4">
                 <p className="text-xs text-muted-foreground mb-1">{t.productId}</p>
-                <p className="text-xs font-mono text-muted-foreground break-all mt-1">{product!.$id}</p>
+                <p className="text-xs font-mono text-muted-foreground break-all mt-1">
+                  {product!.$id}
+                </p>
               </div>
             </div>
 
@@ -156,7 +187,10 @@ export default function ProductDetailPage() {
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => { setName(e.target.value); setSaved(false); }}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setSaved(false);
+                  }}
                   className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                   required
                 />
@@ -167,7 +201,10 @@ export default function ProductDetailPage() {
                 <input
                   type="number"
                   value={price}
-                  onChange={(e) => { setPrice(e.target.value); setSaved(false); }}
+                  onChange={(e) => {
+                    setPrice(e.target.value);
+                    setSaved(false);
+                  }}
                   step="0.01"
                   min="0"
                   className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
@@ -180,7 +217,10 @@ export default function ProductDetailPage() {
                 <input
                   type="number"
                   value={qty}
-                  onChange={(e) => { setQty(e.target.value); setSaved(false); }}
+                  onChange={(e) => {
+                    setQty(e.target.value);
+                    setSaved(false);
+                  }}
                   step="1"
                   min="0"
                   className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
@@ -202,16 +242,20 @@ export default function ProductDetailPage() {
                   saved
                     ? "bg-green-500"
                     : saving || !isDirty
-                    ? "bg-primary/40 cursor-not-allowed"
-                    : "bg-primary hover:bg-primary/90"
+                      ? "bg-primary/40 cursor-not-allowed"
+                      : "bg-primary hover:bg-primary/90"
                 )}
               >
                 {saving ? (
-                  <><Loader2 className="size-4 animate-spin" /> {t.saving}</>
+                  <>
+                    <Loader2 className="size-4 animate-spin" /> {t.saving}
+                  </>
                 ) : saved ? (
                   t.saved
                 ) : (
-                  <><Save className="size-4" /> {t.saveChanges}</>
+                  <>
+                    <Save className="size-4" /> {t.saveChanges}
+                  </>
                 )}
               </button>
             </form>
@@ -219,17 +263,53 @@ export default function ProductDetailPage() {
             <div className="rounded-2xl border border-destructive/30 p-5">
               <h2 className="font-semibold text-destructive mb-1">{t.dangerZone}</h2>
               <p className="text-sm text-muted-foreground mb-4">{t.dangerDesc}</p>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex items-center gap-2 rounded-xl border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
-              >
-                {deleting ? (
-                  <><Loader2 className="size-4 animate-spin" /> {t.deleting}</>
-                ) : (
-                  <><Trash2 className="size-4" /> {t.deleteProduct}</>
-                )}
-              </button>
+
+              <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <button
+                  type="button"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  disabled={deleting}
+                  className="flex items-center gap-2 rounded-xl border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" /> {t.deleting}
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="size-4" /> {t.deleteProduct}
+                    </>
+                  )}
+                </button>
+
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t.deleteProduct}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t.deleteConfirm(product?.name ?? "")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleting}>
+                      {t.cancel ?? "Cancel"}
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deleting ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin" /> {t.deleting}
+                        </>
+                      ) : (
+                        t.deleteProduct
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         )}
