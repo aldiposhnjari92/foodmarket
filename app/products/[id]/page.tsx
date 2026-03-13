@@ -21,6 +21,7 @@ export default function ProductDetailPage() {
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [qty, setQty] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -32,24 +33,30 @@ export default function ProductDetailPage() {
         setProduct(p);
         setName(p.name);
         setPrice(p.price.toString());
+        setQty(p.quantity.toString());
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [id]);
 
   const isDirty =
-    product !== null && (name !== product.name || price !== product.price.toString());
+    product !== null &&
+    (name !== product.name ||
+      price !== product.price.toString() ||
+      qty !== product.quantity.toString());
 
   const handleSave = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaveError(null);
     const parsedPrice = parseFloat(price);
+    const parsedQty = parseInt(qty, 10);
     if (!name.trim()) { setSaveError(t.nameRequired); return; }
     if (isNaN(parsedPrice) || parsedPrice < 0) { setSaveError(t.errValidPrice); return; }
+    if (isNaN(parsedQty) || parsedQty < 0) { setSaveError(t.errValidPrice); return; }
 
     setSaving(true);
     try {
-      const updated = await updateProduct(id, name.trim(), parsedPrice);
+      const updated = await updateProduct(id, name.trim(), parsedPrice, undefined, parsedQty);
       setProduct(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -64,7 +71,7 @@ export default function ProductDetailPage() {
     if (!confirm(t.deleteConfirm(product?.name ?? ""))) return;
     setDeleting(true);
     try {
-      await deleteProduct(id);
+      await deleteProduct(id, product?.image_id);
       router.push("/products");
     } catch {
       setDeleting(false);
@@ -126,10 +133,14 @@ export default function ProductDetailPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className="rounded-2xl border border-border bg-card p-4">
                 <p className="text-xs text-muted-foreground mb-1">{t.currentPrice}</p>
-                <p className="text-2xl font-bold">${product!.price.toFixed(2)}</p>
+                <p className="text-2xl font-bold">L {product!.price.toFixed(2)}</p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <p className="text-xs text-muted-foreground mb-1">{t.colStock}</p>
+                <p className="text-2xl font-bold">{product!.quantity}</p>
               </div>
               <div className="rounded-2xl border border-border bg-card p-4">
                 <p className="text-xs text-muted-foreground mb-1">{t.productId}</p>
@@ -158,6 +169,19 @@ export default function ProductDetailPage() {
                   value={price}
                   onChange={(e) => { setPrice(e.target.value); setSaved(false); }}
                   step="0.01"
+                  min="0"
+                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">{t.quantity}</label>
+                <input
+                  type="number"
+                  value={qty}
+                  onChange={(e) => { setQty(e.target.value); setSaved(false); }}
+                  step="1"
                   min="0"
                   className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                   required

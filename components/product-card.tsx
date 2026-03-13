@@ -47,7 +47,7 @@ export function ProductCard({ product, onDelete, deleting }: ProductCardProps) {
           </div>
         </div>
         <span className="shrink-0 rounded-lg bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">
-          ${product.price.toFixed(2)}
+          L {product.price.toFixed(2)}
         </span>
       </div>
 

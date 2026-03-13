@@ -22,6 +22,7 @@ export default function ScanPage() {
 
   const [productName, setProductName] = useState("");
   const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("1");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   const [lookingUp, setLookingUp] = useState(false);
@@ -33,6 +34,7 @@ export default function ScanPage() {
     setStep("scan");
     setProductName("");
     setPrice("");
+    setQuantity("1");
     setCapturedImage(null);
     setError(null);
   };
@@ -62,8 +64,10 @@ export default function ScanPage() {
     setError(null);
 
     const parsedPrice = parseFloat(price);
+    const parsedQty = parseInt(quantity, 10);
     if (!productName.trim()) { setError(t.errNameRequired); return; }
     if (isNaN(parsedPrice) || parsedPrice < 0) { setError(t.errValidPrice); return; }
+    if (isNaN(parsedQty) || parsedQty < 1) { setError(t.errValidPrice); return; }
 
     setSaving(true);
     try {
@@ -71,7 +75,7 @@ export default function ScanPage() {
       if (capturedImage) {
         imageId = await uploadProductImage(capturedImage);
       }
-      await createProduct(productName.trim(), parsedPrice, imageId);
+      await createProduct(productName.trim(), parsedPrice, imageId, parsedQty);
       router.push("/products");
     } catch {
       setError(t.errSaveFailed);
@@ -154,6 +158,20 @@ export default function ScanPage() {
                 placeholder="0.00"
                 step="0.01"
                 min="0"
+                className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium">{t.quantity}</label>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="1"
+                step="1"
+                min="1"
                 className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                 required
               />

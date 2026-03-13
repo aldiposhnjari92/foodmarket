@@ -26,3 +26,7 @@ export async function uploadProductImage(dataUrl: string): Promise<string> {
 export function getProductImageUrl(fileId: string): string {
   return storage.getFileView({ bucketId: BUCKET_ID, fileId }).toString();
 }
+
+export async function deleteProductImage(fileId: string): Promise<void> {
+  await storage.deleteFile({ bucketId: BUCKET_ID, fileId });
+}

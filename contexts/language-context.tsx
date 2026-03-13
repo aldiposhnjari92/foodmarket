@@ -10,13 +10,13 @@ type LanguageContextValue = {
 };
 
 const LanguageContext = createContext<LanguageContextValue>({
-  locale: "en",
+  locale: "sq",
   setLocale: () => {},
-  t: translations.en,
+  t: translations.sq,
 });
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const [locale, setLocaleState] = useState<Locale>("sq");
 
   useEffect(() => {
     const saved = localStorage.getItem("locale") as Locale | null;

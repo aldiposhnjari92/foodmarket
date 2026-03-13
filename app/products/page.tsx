@@ -25,8 +25,9 @@ export default function ProductsPage() {
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
+    const imageId = products.find((p) => p.$id === id)?.image_id;
     try {
-      await deleteProduct(id);
+      await deleteProduct(id, imageId);
       setProducts((prev) => prev.filter((p) => p.$id !== id));
     } catch (err) {
       console.error("Failed to delete:", err);
@@ -74,6 +75,7 @@ export default function ProductsPage() {
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground w-10" />
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.colName}</th>
                 <th className="px-4 py-3 text-right font-medium text-muted-foreground">{t.colPrice}</th>
+                <th className="hidden px-4 py-3 text-right font-medium text-muted-foreground sm:table-cell">{t.colStock}</th>
                 <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">
                   {t.colDateAdded}
                 </th>
@@ -83,13 +85,13 @@ export default function ProductsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-14 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-14 text-center text-muted-foreground">
                     <Loader2 className="inline size-5 animate-spin" />
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-14 text-center">
+                  <td colSpan={6} className="px-4 py-14 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Package className="size-8 opacity-40" />
                       <p className="text-sm">
@@ -128,7 +130,8 @@ export default function ProductsPage() {
                         {product.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-right">${product.price.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right">L {product.price.toFixed(2)}</td>
+                    <td className="hidden px-4 py-3 text-right sm:table-cell">{product.quantity}</td>
                     <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                       {new Date(product.$createdAt).toLocaleDateString(undefined, {
                         month: "short",

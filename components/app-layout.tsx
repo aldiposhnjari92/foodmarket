@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, ScanLine, LogOut, Menu, ShoppingBasket, Loader2, Globe } from "lucide-react";
+import { LayoutDashboard, Package, ScanLine, FileText, LogOut, Menu, Loader2, Globe } from "lucide-react";
 import { getCurrentUser, logout } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import type { Locale } from "@/lib/i18n";
+import Logo from "./logo";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -22,6 +23,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/dashboard", label: t.navDashboard, icon: LayoutDashboard },
     { href: "/products", label: t.navProducts, icon: Package },
     { href: "/scan", label: t.navScanProduct, icon: ScanLine },
+    { href: "/invoice", label: t.navInvoice, icon: FileText },
   ];
 
   useEffect(() => {
@@ -49,11 +51,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden print:overflow-visible print:h-auto bg-background">
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-20 bg-black/50 lg:hidden print:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -61,13 +63,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-border bg-sidebar transition-transform duration-200 lg:static lg:translate-x-0",
+          "print:hidden fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-border bg-sidebar transition-transform duration-200 lg:static lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex items-center gap-2 border-b border-border px-5 py-4">
-          <ShoppingBasket className="size-5 text-primary" />
-          <span className="text-lg font-bold">{t.appName}</span>
+          <Logo />
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
@@ -126,7 +127,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Mobile header */}
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3 lg:hidden">
+        <header className="print:hidden flex items-center gap-3 border-b border-border px-4 py-3 lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
             className="rounded-lg p-2 hover:bg-muted transition-colors"
@@ -136,7 +137,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <span className="font-semibold">{t.appName}</span>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 print:overflow-visible print:p-0">{children}</main>
       </div>
     </div>
   );

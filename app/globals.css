@@ -127,3 +127,12 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  body {
+    overflow: visible !important;
+  }
+  .print-invoice-only * {
+    visibility: visible;
+  }
+}

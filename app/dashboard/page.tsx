@@ -44,8 +44,8 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard icon={Package} label={t.totalProducts} value={loading ? null : products.length.toString()} />
-          <StatCard icon={DollarSign} label={t.totalValue} value={loading ? null : `$${totalValue.toFixed(2)}`} />
-          <StatCard icon={TrendingUp} label={t.avgPrice} value={loading ? null : `$${avgPrice.toFixed(2)}`} />
+          <StatCard icon={DollarSign} label={t.totalValue} value={loading ? null : `L ${totalValue.toFixed(2)}`} />
+          <StatCard icon={TrendingUp} label={t.avgPrice} value={loading ? null : `L ${avgPrice.toFixed(2)}`} />
         </div>
 
         <div>
@@ -92,7 +92,7 @@ export default function DashboardPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 font-medium">{product.name}</td>
-                      <td className="px-4 py-3 text-right">${product.price.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-right">L {product.price.toFixed(2)}</td>
                       <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                         {new Date(product.$createdAt).toLocaleDateString(undefined, {
                           month: "short",

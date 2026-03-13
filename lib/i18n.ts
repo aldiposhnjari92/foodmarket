@@ -2,7 +2,7 @@ export type Locale = "en" | "sq";
 
 const en = {
   // App
-  appName: "Food Market",
+  appName: "Alb Market",
   // Nav
   navDashboard: "Dashboard",
   navProducts: "Products",
@@ -50,7 +50,7 @@ const en = {
   takePhoto: "Take Photo",
   lookingUp: "Looking up product…",
   productName: "Product Name",
-  priceLabel: "Price ($)",
+  priceLabel: "Price (L)",
   productNamePlaceholder: "e.g. Whole Milk 1L",
   rescan: "Rescan",
   retake: "Retake",
@@ -89,23 +89,44 @@ const en = {
   cancel: "Cancel",
   delete: "Delete",
   remove: "Remove",
+  // Products list
+  colStock: "Stock",
+  quantity: "Quantity",
+  // Invoice
+  navInvoice: "Invoice",
+  invoiceTitle: "New Invoice",
+  invoiceDesc: "Select products and quantities to sell.",
+  invoiceNumber: "Invoice #",
+  invoiceDate: "Date",
+  quantityLabel: "Qty",
+  unitPrice: "Unit Price",
+  subtotal: "Subtotal",
+  vat: "VAT (20%)",
+  grandTotal: "Grand Total",
+  printInvoice: "Print Invoice",
+  total: "Total",
+  confirmSale: "Confirm Sale",
+  saleConfirmed: "Sale confirmed! Inventory updated.",
+  noItemsSelected: "Add at least one product to the invoice.",
+  emptyInvoice: "No items added yet. Select products on the left.",
+  stockLabel: "Stock",
 };
 
 const sq: typeof en = {
   // App
-  appName: "Food Market",
+  appName: "Alb Market",
   // Nav
   navDashboard: "Paneli",
   navProducts: "Produktet",
-  navScanProduct: "Skano Produkt",
+  navScanProduct: "Skano produkt",
   signOut: "Dilni",
   // Login
   signInToAccount: "Hyni në llogarinë tuaj",
   createNewAccount: "Krijoni një llogari të re",
-  labelName: "Emri",
+  labelName: "Emër dhe Mbiemër",
   labelEmail: "Email",
   labelPassword: "Fjalëkalimi",
-  placeholderName: "Artan Gashi",
+  placeholderName: "Alban Skënderaj",
   signIn: "Hyr",
   signingIn: "Duke hyrë…",
   createAccount: "Krijo llogari",
@@ -114,12 +135,12 @@ const sq: typeof en = {
   signUp: "Regjistrohu",
   alreadyAccount: "Keni tashmë një llogari?",
   // Dashboard
-  overviewInventory: "Pasqyrë e inventarit tuaj",
+  overviewInventory: "Pasqyra e inventarit tuaj",
   scanProduct: "Skano Produkt",
   totalProducts: "Produkte Gjithsej",
   totalValue: "Vlera Totale",
   avgPrice: "Çmimi Mesatar",
-  recentlyAdded: "Shtuar Së Fundi",
+  recentlyAdded: "Shtuar së fundi",
   loading: "Duke ngarkuar…",
   noProductsStart: "Nuk ka produkte ende. Skanoni një për të filluar!",
   colName: "Emri",
@@ -130,7 +151,7 @@ const sq: typeof en = {
   searchPlaceholder: "Kërko produkte…",
   colDateAdded: "Data e Shtimit",
   noProductsAdd: "Nuk ka produkte ende. Skanoni një për ta shtuar!",
-  itemsInStock: (n: number) => `${n} artikull${n !== 1 ? "ë" : ""} në gjendje`,
+  itemsInStock: (n: number) => `${n} artikuj në gjendje`,
   noProductsMatching: (search: string) => `Asnjë produkt nuk përputhet me "${search}"`,
   // Scan
   addProductTitle: "Shto Produkt",
@@ -141,7 +162,7 @@ const sq: typeof en = {
   takePhoto: "Bëj Foto",
   lookingUp: "Duke kërkuar produktin…",
   productName: "Emri i Produktit",
-  priceLabel: "Çmimi ($)",
+  priceLabel: "Çmimi (L)",
   productNamePlaceholder: "p.sh. Qumësht i plotë 1L",
   rescan: "Riskano",
   retake: "Rifilmo",
@@ -180,6 +201,27 @@ const sq: typeof en = {
   cancel: "Anulo",
   delete: "Fshi",
   remove: "Hiq",
+  // Products list
+  colStock: "Gjendje",
+  quantity: "Sasia",
+  // Invoice
+  navInvoice: "Faturë",
+  invoiceTitle: "Faturë e Re",
+  invoiceDesc: "Zgjidhni produktet dhe sasitë për t'i shitur.",
+  invoiceNumber: "Faturë Nr.",
+  invoiceDate: "Data",
+  quantityLabel: "Sas.",
+  unitPrice: "Çmimi i njësisë",
+  subtotal: "Nëntotali",
+  total: "Totali",
+  vat: "TVSH (20%)",
+  grandTotal: "Totali i Përgjithshëm",
+  printInvoice: "Printo Faturën",
+  confirmSale: "Konfirmo Shitjen",
+  saleConfirmed: "Shitja u konfirmua! Inventari u përditësua.",
+  noItemsSelected: "Shtoni të paktën një produkt në faturë.",
+  emptyInvoice: "Nuk u shtua asnjë artikull. Zgjidhni produkte majtas.",
+  stockLabel: "Gjendje",
 };
 
 export const translations: Record<Locale, typeof en> = { en, sq };
