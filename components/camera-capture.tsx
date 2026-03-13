@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,33 +16,44 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [retryCount, setRetryCount] = useState(0);
 
-  const startCamera = useCallback(async () => {
-    setError(null);
-    try {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initCamera() {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
       }
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setIsStreaming(true);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        setError(null);
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+          if (!cancelled) setIsStreaming(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setError("Could not access the camera. Please allow camera permissions.");
+        }
       }
-    } catch {
-      setError("Could not access the camera. Please allow camera permissions.");
     }
-  }, [facingMode]);
 
-  useEffect(() => {
-    startCamera();
+    initCamera();
+
     return () => {
+      cancelled = true;
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [startCamera]);
+  }, [facingMode, retryCount]);
 
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -68,7 +79,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
             <Camera className="size-10 opacity-50" />
             <p className="text-sm opacity-75">{error}</p>
             <button
-              onClick={startCamera}
+              onClick={() => setRetryCount((n) => n + 1)}
               className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30 transition-colors"
             >
               Retry
