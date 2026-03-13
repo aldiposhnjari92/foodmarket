@@ -18,6 +18,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [retryCount, setRetryCount] = useState(0);
 
+  // Initialize camera stream and handle cleanup
   useEffect(() => {
     let cancelled = false;
 
