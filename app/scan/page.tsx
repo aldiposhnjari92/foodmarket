@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, Barcode, Camera } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { CameraCapture } from "@/components/camera-capture";
@@ -13,15 +13,22 @@ import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
 import { AccessDenied } from "@/components/app-layout";
 
+
 type Mode = "barcode" | "photo";
 type Step = "scan" | "confirm";
 
 export default function ScanPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLanguage();
-  const { can, roleLoading } = useRole();
+  const { userId, can, roleLoading } = useRole();
+  const isManual = searchParams.get("manual") === "true";
   const [mode, setMode] = useState<Mode>("barcode");
-  const [step, setStep] = useState<Step>("scan");
+  const [step, setStep] = useState<Step>(isManual ? "confirm" : "scan");
+
+  useEffect(() => {
+    if (isManual) setStep("confirm");
+  }, [isManual]);
 
   const [productName, setProductName] = useState("");
   const [price, setPrice] = useState("");
@@ -78,7 +85,7 @@ export default function ScanPage() {
       if (capturedImage) {
         imageId = await uploadProductImage(capturedImage);
       }
-      await createProduct(productName.trim(), parsedPrice, imageId, parsedQty);
+      await createProduct(productName.trim(), parsedPrice, imageId, parsedQty, userId ?? undefined);
       router.push("/products");
     } catch {
       setError(t.errSaveFailed);

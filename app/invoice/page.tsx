@@ -17,6 +17,7 @@ import { getProducts, sellProducts, Product } from "@/lib/products";
 import { createSale, SaleItem } from "@/lib/sales";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { useRole } from "@/contexts/role-context";
 
 interface InvoiceItem {
   product: Product;
@@ -27,6 +28,7 @@ interface InvoiceItem {
 
 export default function InvoicePage() {
   const { t } = useLanguage();
+  const { role, userId } = useRole();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -58,10 +60,12 @@ export default function InvoicePage() {
   });
 
   useEffect(() => {
-    getProducts()
+    if (role === null) return;
+    const ownerId = role === "admin" ? undefined : userId ?? undefined;
+    getProducts(ownerId)
       .then(setProducts)
       .finally(() => setLoading(false));
-  }, []);
+  }, [role, userId]);
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -146,9 +150,7 @@ export default function InvoicePage() {
   const effectivePrice = (item: InvoiceItem) =>
     item.customPrice !== undefined ? item.customPrice : item.product.price;
 
-  const subtotal = items.reduce((sum, i) => sum + effectivePrice(i) * i.qtySold, 0);
-  const vat = subtotal * 0.2;
-  const grandTotal = subtotal + vat;
+  const grandTotal = items.reduce((sum, i) => sum + effectivePrice(i) * i.qtySold, 0);
 
   const handlePrint = () => window.print();
 
@@ -182,14 +184,15 @@ export default function InvoicePage() {
         total: effectivePrice(i) * i.qtySold,
       }));
       try {
-        await createSale(invoiceNumber, saleItems, subtotal, vat, grandTotal, buyerName, sellerName);
+        await createSale(invoiceNumber, saleItems, grandTotal, 0, grandTotal, buyerName, sellerName);
       } catch {
         // Sales table may not be configured yet — sale still counts for inventory
       }
 
       setConfirmed(true);
       setItems([]);
-      const updated = await getProducts();
+      const ownerId = role === "admin" ? undefined : userId ?? undefined;
+      const updated = await getProducts(ownerId);
       setProducts(updated);
       setTimeout(() => setConfirmed(false), 4000);
     } catch {
@@ -503,16 +506,8 @@ export default function InvoicePage() {
             )}
 
             {/* Totals */}
-            <div className="mt-4 pt-3 border-t border-border flex flex-col gap-1.5">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t.subtotal}</span>
-                <span className="tabular-nums">L {subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t.vat}</span>
-                <span className="tabular-nums">L {vat.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-bold text-base pt-1.5 mt-0.5 border-t border-border">
+            <div className="mt-4 pt-3 border-t border-border">
+              <div className="flex justify-between font-bold text-base">
                 <span>{t.grandTotal}</span>
                 <span className="tabular-nums">L {grandTotal.toFixed(2)}</span>
               </div>

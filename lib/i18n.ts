@@ -36,6 +36,7 @@ const en = {
   colDate: "Date",
   // Products page
   addProduct: "Add Product",
+  addManually: "Add Manually",
   searchPlaceholder: "Search products…",
   colDateAdded: "Date Added",
   noProductsAdd: "No products yet. Scan one to add it!",
@@ -221,6 +222,7 @@ const sq: typeof en = {
   colDate: "Data",
   // Products page
   addProduct: "Shto Produkt",
+  addManually: "Shto Manualisht",
   searchPlaceholder: "Kërko produkte…",
   colDateAdded: "Data e Shtimit",
   noProductsAdd: "Nuk ka produkte ende. Skanoni një për ta shtuar!",

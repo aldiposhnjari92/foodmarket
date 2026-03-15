@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ScanLine, Package, DollarSign, TrendingUp, ShoppingCart, BarChart3, Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { getProducts, Product } from "@/lib/products";
+import { useRole } from "@/contexts/role-context";
 import { getSalesTotals } from "@/lib/sales";
 import { getProductImageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
@@ -13,13 +14,15 @@ import { useLanguage } from "@/contexts/language-context";
 
 export default function DashboardPage() {
   const { t } = useLanguage();
+  const { role, userId } = useRole();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [unitsSold, setUnitsSold] = useState<number | null>(null);
   const [revenue, setRevenue] = useState<number | null>(null);
 
   useEffect(() => {
-    getProducts()
+    const ownerId = role === "admin" ? undefined : userId ?? undefined;
+    getProducts(ownerId)
       .then((data) => setProducts(data))
       .finally(() => setLoading(false));
 
@@ -33,7 +36,7 @@ export default function DashboardPage() {
         setUnitsSold(0);
         setRevenue(0);
       });
-  }, []);
+  }, [role, userId]);
 
   const totalValue = products.reduce((sum, p) => sum + p.price, 0);
   const avgPrice = products.length > 0 ? totalValue / products.length : 0;

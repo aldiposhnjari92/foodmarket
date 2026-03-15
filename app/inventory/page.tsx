@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Loader2, ChevronDown, ChevronUp, BarChart3, ShoppingCart, Receipt, Search, User, X } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { getSales, Sale, SaleItem } from "@/lib/sales";
@@ -192,9 +192,8 @@ export default function InventoryPage() {
                     const isExpanded = expandedId === sale.$id;
 
                     return (
-                      <>
+                      <React.Fragment key={sale.$id}>
                         <tr
-                          key={sale.$id}
                           className={cn(
                             "border-t border-border cursor-pointer hover:bg-muted/30 transition-colors",
                             i % 2 !== 0 && "bg-muted/10"
@@ -277,15 +276,7 @@ export default function InventoryPage() {
                                     </span>
                                   </div>
                                 ))}
-                                <div className="mt-2 pt-2 border-t border-border flex flex-col gap-1">
-                                  <div className="flex justify-between text-xs text-muted-foreground">
-                                    <span>{t.subtotal}</span>
-                                    <span>L {sale.subtotal.toFixed(2)}</span>
-                                  </div>
-                                  <div className="flex justify-between text-xs text-muted-foreground">
-                                    <span>{t.vat}</span>
-                                    <span>L {sale.vat.toFixed(2)}</span>
-                                  </div>
+                                <div className="mt-2 pt-2 border-t border-border">
                                   <div className="flex justify-between text-sm font-bold">
                                     <span>{t.grandTotal}</span>
                                     <span>L {sale.grand_total.toFixed(2)}</span>
@@ -295,7 +286,7 @@ export default function InventoryPage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </tbody>

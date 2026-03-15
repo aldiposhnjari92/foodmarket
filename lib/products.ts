@@ -9,6 +9,7 @@ export interface Product {
   price: number;
   quantity: number;
   image_id?: string;
+  owner_id?: string;
 }
 
 function toProduct(row: Models.DefaultRow): Product {
@@ -19,14 +20,17 @@ function toProduct(row: Models.DefaultRow): Product {
     price: row.price as number,
     quantity: (row.quantity as number) ?? 0,
     image_id: (row.image_id as string) || undefined,
+    owner_id: (row.owner_id as string) || undefined,
   };
 }
 
-export async function getProducts(): Promise<Product[]> {
+export async function getProducts(ownerId?: string): Promise<Product[]> {
+  const queries = [Query.orderDesc("$createdAt")];
+  if (ownerId) queries.push(Query.equal("owner_id", ownerId));
   const response = await tablesDB.listRows({
     databaseId: DATABASE_ID,
     tableId: TABLE_ID,
-    queries: [Query.orderDesc("$createdAt")],
+    queries,
   });
   return response.rows.map(toProduct);
 }
@@ -44,10 +48,12 @@ export async function createProduct(
   name: string,
   price: number,
   imageId?: string,
-  quantity: number = 1
+  quantity: number = 1,
+  ownerId?: string
 ): Promise<Product> {
   const data: Record<string, unknown> = { name, price, quantity };
   if (imageId) data.image_id = imageId;
+  if (ownerId) data.owner_id = ownerId;
 
   const row = await tablesDB.createRow({
     databaseId: DATABASE_ID,

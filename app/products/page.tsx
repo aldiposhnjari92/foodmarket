@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ScanLine, Trash2, Package, Loader2, Search } from "lucide-react";
+import { ScanLine, Trash2, Package, Loader2, Search, PlusCircle } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { getProducts, deleteProduct, Product } from "@/lib/products";
 import { getProductImageUrl } from "@/lib/storage";
@@ -11,19 +11,22 @@ import Image from "next/image";
 import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
 
+
 export default function ProductsPage() {
   const { t } = useLanguage();
-  const { can } = useRole();
+  const { role, userId, can } = useRole();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    getProducts()
+    if (role === null) return;
+    const ownerId = role === "admin" ? undefined : userId ?? undefined;
+    getProducts(ownerId)
       .then(setProducts)
       .finally(() => setLoading(false));
-  }, []);
+  }, [role, userId]);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -51,13 +54,22 @@ export default function ProductsPage() {
             <p className="text-sm text-muted-foreground">{t.itemsInStock(products.length)}</p>
           </div>
           {can("products_add") && (
-            <Link
-              href="/scan"
-              className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              <ScanLine className="size-4" />
-              {t.addProduct}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/scan?manual=true"
+                className="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-muted transition-colors"
+              >
+                <PlusCircle className="size-4" />
+                {t.addManually}
+              </Link>
+              <Link
+                href="/scan"
+                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <ScanLine className="size-4" />
+                {t.addProduct}
+              </Link>
+            </div>
           )}
         </div>
 
