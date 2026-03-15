@@ -10,15 +10,19 @@ import {
   CheckCircle2,
   Search,
   Package,
+  PenLine,
 } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { getProducts, sellProducts, Product } from "@/lib/products";
+import { createSale, SaleItem } from "@/lib/sales";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 
 interface InvoiceItem {
   product: Product;
   qtySold: number;
+  customPrice?: number;  // invoice-only price, original price is preserved
+  isManual?: boolean;    // manually added, not deducted from inventory
 }
 
 export default function InvoicePage() {
@@ -30,6 +34,12 @@ export default function InvoicePage() {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Manual item form
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [manualName, setManualName] = useState("");
+  const [manualPrice, setManualPrice] = useState("");
+  const [manualQty, setManualQty] = useState("1");
 
   const invoiceNumber = useRef(`INV-${Date.now().toString().slice(-6)}`).current;
   const invoiceDate = new Date().toLocaleDateString("sq-AL", {
@@ -63,18 +73,60 @@ export default function InvoicePage() {
     });
   };
 
+  const addManualItem = () => {
+    const name = manualName.trim();
+    const price = parseFloat(manualPrice);
+    const qty = parseInt(manualQty, 10);
+    if (!name || isNaN(price) || price < 0 || isNaN(qty) || qty < 1) return;
+
+    const manualProduct: Product = {
+      $id: `manual-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      $createdAt: new Date().toISOString(),
+      name,
+      price,
+      quantity: qty,
+    };
+    setItems((prev) => [...prev, { product: manualProduct, qtySold: qty, isManual: true }]);
+    setManualName("");
+    setManualPrice("");
+    setManualQty("1");
+    setShowManualForm(false);
+  };
+
   const updateQty = (id: string, delta: number) => {
     setItems((prev) =>
       prev
-        .map((i) =>
-          i.product.$id === id
-            ? {
-                ...i,
-                qtySold: Math.max(0, Math.min(i.qtySold + delta, i.product.quantity)),
-              }
-            : i
-        )
+        .map((i) => {
+          if (i.product.$id !== id) return i;
+          const max = i.isManual ? Infinity : i.product.quantity;
+          return { ...i, qtySold: Math.max(0, Math.min(i.qtySold + delta, max)) };
+        })
         .filter((i) => i.qtySold > 0)
+    );
+  };
+
+  const setQtyDirect = (id: string, value: string) => {
+    const n = parseInt(value, 10);
+    if (isNaN(n) || n < 0) return;
+    setItems((prev) =>
+      prev
+        .map((i) => {
+          if (i.product.$id !== id) return i;
+          const max = i.isManual ? Infinity : i.product.quantity;
+          return { ...i, qtySold: Math.min(n, max) };
+        })
+        .filter((i) => i.qtySold > 0)
+    );
+  };
+
+  const updatePrice = (id: string, value: string) => {
+    const n = parseFloat(value);
+    setItems((prev) =>
+      prev.map((i) =>
+        i.product.$id === id
+          ? { ...i, customPrice: isNaN(n) || value === "" ? undefined : n }
+          : i
+      )
     );
   };
 
@@ -82,7 +134,10 @@ export default function InvoicePage() {
     setItems((prev) => prev.filter((i) => i.product.$id !== id));
   };
 
-  const subtotal = items.reduce((sum, i) => sum + i.product.price * i.qtySold, 0);
+  const effectivePrice = (item: InvoiceItem) =>
+    item.customPrice !== undefined ? item.customPrice : item.product.price;
+
+  const subtotal = items.reduce((sum, i) => sum + effectivePrice(i) * i.qtySold, 0);
   const vat = subtotal * 0.2;
   const grandTotal = subtotal + vat;
 
@@ -96,14 +151,33 @@ export default function InvoicePage() {
     setError(null);
     setConfirming(true);
     try {
-      await sellProducts(
-        items.map((i) => ({
-          id: i.product.$id,
-          qtySold: i.qtySold,
-          currentQty: i.product.quantity,
-          imageId: i.product.image_id,
-        }))
-      );
+      // Deduct inventory for non-manual items
+      const inventoryItems = items.filter((i) => !i.isManual);
+      if (inventoryItems.length > 0) {
+        await sellProducts(
+          inventoryItems.map((i) => ({
+            id: i.product.$id,
+            qtySold: i.qtySold,
+            currentQty: i.product.quantity,
+            imageId: i.product.image_id,
+          }))
+        );
+      }
+
+      // Record the sale (best-effort — requires SALES_TABLE_ID env var)
+      const saleItems: SaleItem[] = items.map((i) => ({
+        product_id: i.product.$id,
+        product_name: i.product.name,
+        qty_sold: i.qtySold,
+        unit_price: effectivePrice(i),
+        total: effectivePrice(i) * i.qtySold,
+      }));
+      try {
+        await createSale(invoiceNumber, saleItems, subtotal, vat, grandTotal);
+      } catch {
+        // Sales table may not be configured yet — sale still counts for inventory
+      }
+
       setConfirmed(true);
       setItems([]);
       const updated = await getProducts();
@@ -192,6 +266,65 @@ export default function InvoicePage() {
               )}
             </div>
           )}
+
+          {/* Manual item form */}
+          <div className="mt-4 border-t border-border pt-4">
+            {showManualForm ? (
+              <div className="flex flex-col gap-3 rounded-xl border border-border p-4">
+                <p className="text-sm font-semibold">{t.manualItemTitle}</p>
+                <input
+                  type="text"
+                  value={manualName}
+                  onChange={(e) => setManualName(e.target.value)}
+                  placeholder={t.productName}
+                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={manualPrice}
+                    onChange={(e) => setManualPrice(e.target.value)}
+                    placeholder={t.priceLabel}
+                    min="0"
+                    step="0.01"
+                    className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <input
+                    type="number"
+                    value={manualQty}
+                    onChange={(e) => setManualQty(e.target.value)}
+                    placeholder={t.quantityLabel}
+                    min="1"
+                    step="1"
+                    className="w-20 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={addManualItem}
+                    disabled={!manualName.trim() || !manualPrice}
+                    className="flex-1 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors"
+                  >
+                    {t.addToInvoice}
+                  </button>
+                  <button
+                    onClick={() => setShowManualForm(false)}
+                    className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-muted transition-colors"
+                  >
+                    {t.cancel}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowManualForm(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-2.5 text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              >
+                <PenLine className="size-4" />
+                {t.addManualItem}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ── Invoice preview + actions ── */}
@@ -239,9 +372,15 @@ export default function InvoicePage() {
                     key={item.product.$id}
                     className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center py-2.5"
                   >
-                    <span className="text-sm font-medium truncate pr-1">
-                      {item.product.name}
-                    </span>
+                    {/* Name + optional manual badge */}
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium truncate block pr-1">
+                        {item.product.name}
+                      </span>
+                      {item.isManual && (
+                        <span className="text-xs text-primary font-medium">{t.manualBadge}</span>
+                      )}
+                    </div>
 
                     {/* Qty controls — screen only */}
                     <div className="flex items-center gap-1 print:hidden">
@@ -251,9 +390,14 @@ export default function InvoicePage() {
                       >
                         <Minus className="size-3" />
                       </button>
-                      <span className="text-sm w-6 text-center tabular-nums">
-                        {item.qtySold}
-                      </span>
+                      <input
+                        type="number"
+                        value={item.qtySold}
+                        min="1"
+                        max={item.isManual ? undefined : item.product.quantity}
+                        onChange={(e) => setQtyDirect(item.product.$id, e.target.value)}
+                        className="w-10 text-center text-sm tabular-nums rounded border border-input bg-background px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring"
+                      />
                       <button
                         onClick={() => updateQty(item.product.$id, 1)}
                         className="rounded p-0.5 hover:bg-muted transition-colors"
@@ -266,13 +410,30 @@ export default function InvoicePage() {
                       {item.qtySold}
                     </span>
 
-                    <span className="text-sm text-right tabular-nums">
-                      L {item.product.price.toFixed(2)}
+                    {/* Editable price — screen only */}
+                    <div className="flex flex-col items-end print:hidden">
+                      <input
+                        type="number"
+                        value={item.customPrice !== undefined ? item.customPrice : item.product.price}
+                        min="0"
+                        step="0.01"
+                        onChange={(e) => updatePrice(item.product.$id, e.target.value)}
+                        className="w-20 text-right text-sm tabular-nums rounded border border-input bg-background px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      {item.customPrice !== undefined && (
+                        <span className="text-xs text-muted-foreground line-through">
+                          L {item.product.price.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                    {/* Price — print only */}
+                    <span className="hidden print:block text-sm text-right tabular-nums">
+                      L {effectivePrice(item).toFixed(2)}
                     </span>
 
                     <div className="flex items-center justify-end gap-1">
                       <span className="text-sm font-medium tabular-nums">
-                        L {(item.product.price * item.qtySold).toFixed(2)}
+                        L {(effectivePrice(item) * item.qtySold).toFixed(2)}
                       </span>
                       <button
                         onClick={() => removeItem(item.product.$id)}

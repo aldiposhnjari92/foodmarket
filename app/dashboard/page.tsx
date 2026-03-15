@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ScanLine, Package, DollarSign, TrendingUp, Loader2 } from "lucide-react";
+import { ScanLine, Package, DollarSign, TrendingUp, ShoppingCart, BarChart3, Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { getProducts, Product } from "@/lib/products";
+import { getSalesTotals } from "@/lib/sales";
 import { getProductImageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -14,11 +15,24 @@ export default function DashboardPage() {
   const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [unitsSold, setUnitsSold] = useState<number | null>(null);
+  const [revenue, setRevenue] = useState<number | null>(null);
 
   useEffect(() => {
     getProducts()
       .then((data) => setProducts(data))
       .finally(() => setLoading(false));
+
+    getSalesTotals()
+      .then(({ unitsSold, revenue }) => {
+        setUnitsSold(unitsSold);
+        setRevenue(revenue);
+      })
+      .catch(() => {
+        // Sales table not configured yet
+        setUnitsSold(0);
+        setRevenue(0);
+      });
   }, []);
 
   const totalValue = products.reduce((sum, p) => sum + p.price, 0);
@@ -42,10 +56,27 @@ export default function DashboardPage() {
           </Link>
         </div>
 
+        {/* Inventory stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard icon={Package} label={t.totalProducts} value={loading ? null : products.length.toString()} />
           <StatCard icon={DollarSign} label={t.totalValue} value={loading ? null : `L ${totalValue.toFixed(2)}`} />
           <StatCard icon={TrendingUp} label={t.avgPrice} value={loading ? null : `L ${avgPrice.toFixed(2)}`} />
+        </div>
+
+        {/* Sales stats */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <StatCard
+            icon={ShoppingCart}
+            label={t.totalSold}
+            value={unitsSold === null ? null : unitsSold.toString()}
+            accent
+          />
+          <StatCard
+            icon={BarChart3}
+            label={t.totalRevenue}
+            value={revenue === null ? null : `L ${revenue.toFixed(2)}`}
+            accent
+          />
         </div>
 
         <div>
@@ -116,14 +147,22 @@ function StatCard({
   icon: Icon,
   label,
   value,
+  accent = false,
 }: {
   icon: React.ElementType;
   label: string;
   value: string | null;
+  accent?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
-      <div className="mb-2 flex items-center gap-2 text-muted-foreground">
+    <div className={cn(
+      "rounded-2xl border p-5",
+      accent ? "border-primary/20 bg-primary/5" : "border-border bg-card"
+    )}>
+      <div className={cn(
+        "mb-2 flex items-center gap-2",
+        accent ? "text-primary" : "text-muted-foreground"
+      )}>
         <Icon className="size-4" />
         <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
       </div>

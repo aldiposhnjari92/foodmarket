@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Save, Loader2, Package } from "lucide-react";
+import { ArrowLeft, Trash2, Save, Loader2, Package, Plus } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { getProduct, updateProduct, deleteProduct, Product } from "@/lib/products";
 import { getProductImageUrl } from "@/lib/storage";
@@ -38,6 +38,11 @@ export default function ProductDetailPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Restock state
+  const [addQty, setAddQty] = useState("");
+  const [addingStock, setAddingStock] = useState(false);
+  const [stockAdded, setStockAdded] = useState(false);
 
   useEffect(() => {
     getProduct(id)
@@ -89,6 +94,31 @@ export default function ProductDetailPage() {
       setSaveError(t.saveChangesFailed);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAddStock = async () => {
+    if (!product) return;
+    const n = parseInt(addQty, 10);
+    if (isNaN(n) || n < 1) return;
+    setAddingStock(true);
+    try {
+      const updated = await updateProduct(
+        id,
+        product.name,
+        product.price,
+        product.image_id,
+        product.quantity + n
+      );
+      setProduct(updated);
+      setQty(updated.quantity.toString());
+      setAddQty("");
+      setStockAdded(true);
+      setTimeout(() => setStockAdded(false), 2500);
+    } catch {
+      // silent — user can retry
+    } finally {
+      setAddingStock(false);
     }
   };
 
@@ -259,6 +289,58 @@ export default function ProductDetailPage() {
                 )}
               </button>
             </form>
+
+            {/* Restock section */}
+            <div className="rounded-2xl border border-border p-5 flex flex-col gap-4">
+              <div>
+                <h2 className="font-semibold">{t.restockTitle}</h2>
+                <p className="text-sm text-muted-foreground">{t.restockDesc}</p>
+              </div>
+
+              <div className="flex items-end gap-3">
+                <div className="flex flex-col gap-1.5 flex-1">
+                  <label className="text-sm font-medium">{t.addUnits}</label>
+                  <input
+                    type="number"
+                    value={addQty}
+                    onChange={(e) => setAddQty(e.target.value)}
+                    placeholder={t.addUnitsPlaceholder}
+                    min="1"
+                    step="1"
+                    className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                  />
+                </div>
+                {addQty && parseInt(addQty) > 0 && product && (
+                  <p className="text-sm text-muted-foreground pb-2.5 shrink-0">
+                    {t.newStockTotal(product.quantity + parseInt(addQty))}
+                  </p>
+                )}
+              </div>
+
+              {stockAdded && (
+                <p className="rounded-lg bg-green-500/10 px-4 py-2.5 text-sm text-green-600 font-medium">
+                  {t.stockAdded}
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={handleAddStock}
+                disabled={addingStock || !addQty || parseInt(addQty) < 1}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-primary-foreground transition-all",
+                  addingStock || !addQty || parseInt(addQty) < 1
+                    ? "bg-primary/40 cursor-not-allowed"
+                    : "bg-primary hover:bg-primary/90"
+                )}
+              >
+                {addingStock ? (
+                  <><Loader2 className="size-4 animate-spin" /> {t.addingStock}</>
+                ) : (
+                  <><Plus className="size-4" /> {t.addStockBtn}</>
+                )}
+              </button>
+            </div>
 
             <div className="rounded-2xl border border-destructive/30 p-5">
               <h2 className="font-semibold text-destructive mb-1">{t.dangerZone}</h2>

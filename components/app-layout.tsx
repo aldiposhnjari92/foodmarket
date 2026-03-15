@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, ScanLine, FileText, LogOut, Menu, Loader2, Globe } from "lucide-react";
+import { LayoutDashboard, Package, ScanLine, FileText, Archive, LogOut, Menu, Loader2, Globe } from "lucide-react";
 import { getCurrentUser, logout } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/products", label: t.navProducts, icon: Package },
     { href: "/scan", label: t.navScanProduct, icon: ScanLine },
     { href: "/invoice", label: t.navInvoice, icon: FileText },
+    { href: "/inventory", label: t.navInventory, icon: Archive },
   ];
 
   useEffect(() => {

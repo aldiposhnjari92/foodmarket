@@ -110,6 +110,33 @@ const en = {
   noItemsSelected: "Add at least one product to the invoice.",
   emptyInvoice: "No items added yet. Select products on the left.",
   stockLabel: "Stock",
+  // Inventory page
+  navInventory: "Inventory",
+  inventoryTitle: "Inventory",
+  inventoryDesc: "Track your sales history and performance.",
+  noSalesYet: "No sales recorded yet.",
+  totalSold: "Units Sold",
+  totalRevenue: "Total Revenue",
+  saleDate: "Date",
+  invoiceNo: "Invoice #",
+  itemsCount: "Items",
+  revenue: "Revenue",
+  viewDetails: "Details",
+  soldItems: "items sold",
+  // Invoice additions
+  addManualItem: "Add Manual",
+  manualItemTitle: "Add Manual Item",
+  addToInvoice: "Add to Invoice",
+  manualBadge: "Manual",
+  // Product detail restock
+  restockTitle: "Restock",
+  restockDesc: "Add more units to this product's stock.",
+  addUnits: "Units to add",
+  addUnitsPlaceholder: "e.g. 13",
+  addStockBtn: "Add Stock",
+  addingStock: "Adding…",
+  stockAdded: "Stock updated!",
+  newStockTotal: (n: number) => `New total: ${n}`,
 };
 
 const sq: typeof en = {
@@ -222,6 +249,33 @@ const sq: typeof en = {
   noItemsSelected: "Shtoni të paktën një produkt në faturë.",
   emptyInvoice: "Nuk u shtua asnjë artikull. Zgjidhni produkte majtas.",
   stockLabel: "Gjendje",
+  // Inventory page
+  navInventory: "Inventari",
+  inventoryTitle: "Inventari",
+  inventoryDesc: "Gjurmoni historinë e shitjeve tuaja.",
+  noSalesYet: "Nuk ka shitje të regjistruara ende.",
+  totalSold: "Njësi të Shitura",
+  totalRevenue: "Të Ardhura Totale",
+  saleDate: "Data",
+  invoiceNo: "Faturë Nr.",
+  itemsCount: "Artikuj",
+  revenue: "Të Ardhura",
+  viewDetails: "Detaje",
+  soldItems: "artikuj të shitur",
+  // Invoice additions
+  addManualItem: "Shto Manual",
+  manualItemTitle: "Shto Artikull Manual",
+  addToInvoice: "Shto në Faturë",
+  manualBadge: "Manual",
+  // Product detail restock
+  restockTitle: "Rimbush Stokun",
+  restockDesc: "Shtoni njësi të reja në stokun e këtij produkti.",
+  addUnits: "Njësi për t'u shtuar",
+  addUnitsPlaceholder: "p.sh. 13",
+  addStockBtn: "Shto Stok",
+  addingStock: "Duke shtuar…",
+  stockAdded: "Stoku u përditësua!",
+  newStockTotal: (n: number) => `Totali i ri: ${n}`,
 };
 
 export const translations: Record<Locale, typeof en> = { en, sq };
