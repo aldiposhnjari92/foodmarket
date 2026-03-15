@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
 import { AccessDenied } from "@/components/app-layout";
+import Image from "next/image";
 
 
 type Mode = "barcode" | "photo";
@@ -146,7 +147,7 @@ export default function ScanPage() {
           <form onSubmit={handleSave} className="flex flex-col gap-5">
             {capturedImage && (
               <div className="overflow-hidden rounded-2xl border border-border aspect-4/3">
-                <img src={capturedImage} alt="Captured" className="h-full w-full object-cover" />
+                <Image src={capturedImage} alt="Captured" className="h-full w-full object-cover" />
               </div>
             )}
 
