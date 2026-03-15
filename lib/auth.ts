@@ -23,3 +23,19 @@ export async function getCurrentUser(): Promise<User | null> {
     return null;
   }
 }
+
+export async function updateName(name: string) {
+  return account.updateName(name);
+}
+
+export async function updateEmail(email: string, password: string) {
+  return account.updateEmail(email, password);
+}
+
+export async function updatePassword(newPassword: string, oldPassword: string) {
+  return account.updatePassword(newPassword, oldPassword);
+}
+
+export async function updatePhone(phone: string, password: string) {
+  return account.updatePhone(phone, password);
+}

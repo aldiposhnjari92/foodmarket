@@ -15,6 +15,8 @@ import {
 import { AppLayout } from "@/components/app-layout";
 import { getProducts, sellProducts, Product } from "@/lib/products";
 import { createSale, SaleItem } from "@/lib/sales";
+import { getCustomers, Customer } from "@/lib/customers";
+import { CustomerCombobox } from "@/components/customer-combobox";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
@@ -47,6 +49,10 @@ export default function InvoicePage() {
   const [buyerName, setBuyerName] = useState("");
   const [sellerName, setSellerName] = useState("");
 
+  // Buyer autocomplete
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const customerNames = customers.map((c) => c.name);
+
   const invoiceNumber = useRef(`INV-${Date.now().toString().slice(-6)}`).current;
   const now = useRef(new Date()).current;
   const invoiceDate = now.toLocaleDateString("sq-AL", {
@@ -66,6 +72,10 @@ export default function InvoicePage() {
       .then(setProducts)
       .finally(() => setLoading(false));
   }, [role, userId]);
+
+  useEffect(() => {
+    getCustomers().then(setCustomers).catch(() => {});
+  }, []);
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -231,12 +241,12 @@ export default function InvoicePage() {
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 {t.soldTo}
               </label>
-              <input
-                type="text"
+              <CustomerCombobox
                 value={buyerName}
-                onChange={(e) => setBuyerName(e.target.value)}
+                onChange={setBuyerName}
+                suggestions={customerNames}
                 placeholder={t.buyerPlaceholder}
-                className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                className="[&_input]:py-2 [&_input]:rounded-xl"
               />
             </div>
           </div>

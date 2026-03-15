@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Loader2, ChevronDown, ChevronUp, BarChart3, ShoppingCart, Receipt, Search, User, X } from "lucide-react";
+import { Loader2, ChevronDown, ChevronUp, BarChart3, ShoppingCart, Receipt, User } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { getSales, Sale, SaleItem } from "@/lib/sales";
+import { CustomerCombobox } from "@/components/customer-combobox";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
@@ -101,60 +102,18 @@ export default function InventoryPage() {
         </div>
 
         {/* Customer filter */}
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={customerFilter}
-                onChange={(e) => setCustomerFilter(e.target.value)}
-                placeholder={t.filterByCustomer}
-                className="w-full rounded-xl border border-input bg-background pl-9 pr-9 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
-              />
-              {customerFilter && (
-                <button
-                  onClick={() => setCustomerFilter("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-4" />
-                </button>
-              )}
-            </div>
-            {customerFilter && (
-              <span className="text-sm text-muted-foreground">
-                {filtered.length} {filtered.length === 1 ? "result" : "results"}
-              </span>
-            )}
-          </div>
-
-          {/* Quick-pick customer chips */}
-          {customerNames.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {customerFilter && (
-                <button
-                  onClick={() => setCustomerFilter("")}
-                  className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:bg-muted transition-colors"
-                >
-                  {t.allCustomers}
-                </button>
-              )}
-              {customerNames.map((name) => (
-                <button
-                  key={name}
-                  onClick={() => setCustomerFilter(name === customerFilter ? "" : name)}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                    customerFilter === name
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border hover:bg-muted text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <User className="size-3" />
-                  {name}
-                </button>
-              ))}
-            </div>
+        <div className="flex items-center gap-3">
+          <CustomerCombobox
+            value={customerFilter}
+            onChange={setCustomerFilter}
+            suggestions={customerNames}
+            placeholder={t.filterByCustomer}
+            className="max-w-sm flex-1"
+          />
+          {customerFilter && (
+            <span className="text-sm text-muted-foreground">
+              {filtered.length} {filtered.length === 1 ? "result" : "results"}
+            </span>
           )}
         </div>
 

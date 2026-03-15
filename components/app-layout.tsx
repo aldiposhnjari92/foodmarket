@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, ScanLine, FileText, Archive, Users, UserCheck, LogOut, Menu, Loader2, Globe, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Package, ScanLine, FileText, Archive, Users, UserCheck, LogOut, Menu, Loader2, Globe, ShieldAlert, CircleUserRound } from "lucide-react";
 import { getCurrentUser, logout } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -112,10 +112,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="border-t border-border p-4">
-          <div className="mb-3 px-1">
-            <p className="truncate text-sm font-medium">{user?.name || user?.email}</p>
-            <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-          </div>
+          <Link
+            href="/profile"
+            onClick={() => setSidebarOpen(false)}
+            className={cn(
+              "mb-3 flex items-center gap-2.5 rounded-lg px-1 py-1.5 transition-colors hover:bg-muted",
+              pathname === "/profile" && "bg-muted"
+            )}
+          >
+            <CircleUserRound className="size-4 shrink-0 text-muted-foreground" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium leading-tight">{user?.name || user?.email}</p>
+              <p className="truncate text-xs text-muted-foreground leading-tight">{user?.email}</p>
+            </div>
+          </Link>
           <button
             onClick={handleLogout}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"

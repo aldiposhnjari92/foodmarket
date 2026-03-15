@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, Barcode, Camera } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
@@ -18,7 +18,7 @@ import Image from "next/image";
 type Mode = "barcode" | "photo";
 type Step = "scan" | "confirm";
 
-export default function ScanPage() {
+function ScanContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLanguage();
@@ -225,5 +225,13 @@ export default function ScanPage() {
         )}
       </div>
     </AppLayout>
+  );
+}
+
+export default function ScanPage() {
+  return (
+    <Suspense>
+      <ScanContent />
+    </Suspense>
   );
 }
