@@ -110,6 +110,15 @@ const en = {
   noItemsSelected: "Add at least one product to the invoice.",
   emptyInvoice: "No items added yet. Select products on the left.",
   stockLabel: "Stock",
+  // Invoice parties
+  soldTo: "Sold To",
+  soldBy: "Sold By",
+  buyerPlaceholder: "Customer name",
+  sellerPlaceholder: "Seller name",
+  filterByCustomer: "Filter by customer…",
+  customer: "Customer",
+  seller: "Seller",
+  allCustomers: "All customers",
   // Inventory page
   navInventory: "Inventory",
   inventoryTitle: "Inventory",
@@ -249,6 +258,15 @@ const sq: typeof en = {
   noItemsSelected: "Shtoni të paktën një produkt në faturë.",
   emptyInvoice: "Nuk u shtua asnjë artikull. Zgjidhni produkte majtas.",
   stockLabel: "Gjendje",
+  // Invoice parties
+  soldTo: "Shitur Për",
+  soldBy: "Shitur Nga",
+  buyerPlaceholder: "Emri i blerësit",
+  sellerPlaceholder: "Emri i shitësit",
+  filterByCustomer: "Filtro sipas klientit…",
+  customer: "Klienti",
+  seller: "Shitësi",
+  allCustomers: "Të gjithë klientët",
   // Inventory page
   navInventory: "Inventari",
   inventoryTitle: "Inventari",

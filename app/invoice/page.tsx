@@ -41,11 +41,20 @@ export default function InvoicePage() {
   const [manualPrice, setManualPrice] = useState("");
   const [manualQty, setManualQty] = useState("1");
 
+  // Invoice parties
+  const [buyerName, setBuyerName] = useState("");
+  const [sellerName, setSellerName] = useState("");
+
   const invoiceNumber = useRef(`INV-${Date.now().toString().slice(-6)}`).current;
-  const invoiceDate = new Date().toLocaleDateString("sq-AL", {
+  const now = useRef(new Date()).current;
+  const invoiceDate = now.toLocaleDateString("sq-AL", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+  });
+  const invoiceTime = now.toLocaleTimeString("sq-AL", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
   useEffect(() => {
@@ -173,7 +182,7 @@ export default function InvoicePage() {
         total: effectivePrice(i) * i.qtySold,
       }));
       try {
-        await createSale(invoiceNumber, saleItems, subtotal, vat, grandTotal);
+        await createSale(invoiceNumber, saleItems, subtotal, vat, grandTotal, buyerName, sellerName);
       } catch {
         // Sales table may not be configured yet — sale still counts for inventory
       }
@@ -201,6 +210,34 @@ export default function InvoicePage() {
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* ── Product selector ── */}
         <div className="print:hidden flex-1 min-w-0">
+          {/* Parties */}
+          <div className="mb-4 grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {t.soldBy}
+              </label>
+              <input
+                type="text"
+                value={sellerName}
+                onChange={(e) => setSellerName(e.target.value)}
+                placeholder={t.sellerPlaceholder}
+                className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {t.soldTo}
+              </label>
+              <input
+                type="text"
+                value={buyerName}
+                onChange={(e) => setBuyerName(e.target.value)}
+                placeholder={t.buyerPlaceholder}
+                className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+              />
+            </div>
+          </div>
+
           <div className="mb-3 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
@@ -346,10 +383,28 @@ export default function InvoicePage() {
                   {t.invoiceNumber} {invoiceNumber}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {t.invoiceDate}: {invoiceDate}
+                  {t.invoiceDate}: {invoiceDate} {invoiceTime}
                 </p>
               </div>
             </div>
+
+            {/* Parties — shown when at least one is filled, always shown on print */}
+            {(sellerName || buyerName) && (
+              <div className="grid grid-cols-2 gap-4 mb-5 pb-5 border-b border-border">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">
+                    {t.soldBy}
+                  </p>
+                  <p className="text-sm font-medium">{sellerName || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">
+                    {t.soldTo}
+                  </p>
+                  <p className="text-sm font-medium">{buyerName || "—"}</p>
+                </div>
+              </div>
+            )}
 
             {/* Column headers */}
             <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 mb-1">
@@ -464,9 +519,21 @@ export default function InvoicePage() {
             </div>
 
             {/* Print-only footer */}
-            <p className="hidden print:block mt-10 text-xs text-center text-muted-foreground">
-              {t.appName} · {invoiceDate}
-            </p>
+            <div className="hidden print:block mt-10 border-t border-border pt-6">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <div>
+                  <p className="font-semibold uppercase tracking-wide mb-1">{t.soldBy}</p>
+                  <p>{sellerName || "—"}</p>
+                </div>
+                <div className="text-center">
+                  <p>{t.appName} · {invoiceDate} {invoiceTime}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold uppercase tracking-wide mb-1">{t.soldTo}</p>
+                  <p>{buyerName || "—"}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Action buttons — hidden when printing */}

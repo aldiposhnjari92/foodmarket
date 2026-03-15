@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, ChevronDown, ChevronUp, BarChart3, ShoppingCart, Receipt } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2, ChevronDown, ChevronUp, BarChart3, ShoppingCart, Receipt, Search, User, X } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { getSales, Sale, SaleItem } from "@/lib/sales";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ export default function InventoryPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [customerFilter, setCustomerFilter] = useState("");
 
   useEffect(() => {
     getSales()
@@ -20,8 +21,24 @@ export default function InventoryPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const totalRevenue = sales.reduce((s, sale) => s + sale.grand_total, 0);
-  const totalUnits = sales.reduce((s, sale) => {
+  // Unique customer names for the suggestion list
+  const customerNames = useMemo(() => {
+    const names = sales
+      .map((s) => s.buyer_name)
+      .filter(Boolean)
+      .filter((v, i, arr) => arr.indexOf(v) === i)
+      .sort();
+    return names;
+  }, [sales]);
+
+  const filtered = useMemo(() => {
+    if (!customerFilter.trim()) return sales;
+    const q = customerFilter.toLowerCase();
+    return sales.filter((s) => s.buyer_name.toLowerCase().includes(q));
+  }, [sales, customerFilter]);
+
+  const totalRevenue = filtered.reduce((s, sale) => s + sale.grand_total, 0);
+  const totalUnits = filtered.reduce((s, sale) => {
     try {
       const items: SaleItem[] = JSON.parse(sale.items_json);
       return s + items.reduce((n, i) => n + i.qty_sold, 0);
@@ -42,7 +59,7 @@ export default function InventoryPage() {
           <p className="text-sm text-muted-foreground">{t.inventoryDesc}</p>
         </div>
 
-        {/* Summary stats */}
+        {/* Summary stats — reflect current filter */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
             <div className="mb-2 flex items-center gap-2 text-primary">
@@ -52,7 +69,7 @@ export default function InventoryPage() {
             {loading ? (
               <div className="h-8 w-16 animate-pulse rounded-lg bg-muted" />
             ) : (
-              <p className="text-2xl font-bold">{sales.length}</p>
+              <p className="text-2xl font-bold">{filtered.length}</p>
             )}
           </div>
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
@@ -79,17 +96,76 @@ export default function InventoryPage() {
           </div>
         </div>
 
+        {/* Customer filter */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={customerFilter}
+                onChange={(e) => setCustomerFilter(e.target.value)}
+                placeholder={t.filterByCustomer}
+                className="w-full rounded-xl border border-input bg-background pl-9 pr-9 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+              />
+              {customerFilter && (
+                <button
+                  onClick={() => setCustomerFilter("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
+            {customerFilter && (
+              <span className="text-sm text-muted-foreground">
+                {filtered.length} {filtered.length === 1 ? "result" : "results"}
+              </span>
+            )}
+          </div>
+
+          {/* Quick-pick customer chips */}
+          {customerNames.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {customerFilter && (
+                <button
+                  onClick={() => setCustomerFilter("")}
+                  className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  {t.allCustomers}
+                </button>
+              )}
+              {customerNames.map((name) => (
+                <button
+                  key={name}
+                  onClick={() => setCustomerFilter(name === customerFilter ? "" : name)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                    customerFilter === name
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border hover:bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <User className="size-3" />
+                  {name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Sales history table */}
         <div>
-          <h2 className="mb-3 font-semibold">{t.inventoryDesc}</h2>
           {loading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" /> {t.loading}
             </div>
-          ) : sales.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border py-16 text-center">
               <Receipt className="size-10 mx-auto opacity-20 mb-3" />
-              <p className="text-sm text-muted-foreground">{t.noSalesYet}</p>
+              <p className="text-sm text-muted-foreground">
+                {customerFilter ? t.noProductsMatching(customerFilter) : t.noSalesYet}
+              </p>
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-border">
@@ -98,13 +174,15 @@ export default function InventoryPage() {
                   <tr>
                     <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.invoiceNo}</th>
                     <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.saleDate}</th>
+                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">{t.customer}</th>
+                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">{t.seller}</th>
                     <th className="hidden px-4 py-3 text-right font-medium text-muted-foreground sm:table-cell">{t.itemsCount}</th>
                     <th className="px-4 py-3 text-right font-medium text-muted-foreground">{t.revenue}</th>
                     <th className="px-4 py-3 w-10" />
                   </tr>
                 </thead>
                 <tbody>
-                  {sales.map((sale, i) => {
+                  {filtered.map((sale, i) => {
                     let saleItems: SaleItem[] = [];
                     try { saleItems = JSON.parse(sale.items_json); } catch { /* skip */ }
                     const isExpanded = expandedId === sale.$id;
@@ -122,7 +200,7 @@ export default function InventoryPage() {
                           <td className="px-4 py-3 font-medium font-mono text-xs">
                             {sale.invoice_number}
                           </td>
-                          <td className="px-4 py-3 text-muted-foreground">
+                          <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                             {new Date(sale.$createdAt).toLocaleDateString(undefined, {
                               day: "numeric",
                               month: "short",
@@ -134,6 +212,19 @@ export default function InventoryPage() {
                                 minute: "2-digit",
                               })}
                             </span>
+                          </td>
+                          <td className="hidden px-4 py-3 md:table-cell">
+                            {sale.buyer_name ? (
+                              <span className="flex items-center gap-1.5">
+                                <User className="size-3 text-muted-foreground shrink-0" />
+                                {sale.buyer_name}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">
+                            {sale.seller_name || "—"}
                           </td>
                           <td className="hidden px-4 py-3 text-right sm:table-cell">
                             {saleItems.reduce((s, i) => s + i.qty_sold, 0)} {t.soldItems}
@@ -152,7 +243,19 @@ export default function InventoryPage() {
 
                         {isExpanded && (
                           <tr key={`${sale.$id}-detail`} className="border-t border-border bg-muted/5">
-                            <td colSpan={5} className="px-6 py-3">
+                            <td colSpan={7} className="px-6 py-4">
+                              {/* Parties row */}
+                              {(sale.buyer_name || sale.seller_name) && (
+                                <div className="flex gap-6 mb-3 pb-3 border-b border-border text-xs text-muted-foreground">
+                                  {sale.seller_name && (
+                                    <span><span className="font-semibold">{t.soldBy}:</span> {sale.seller_name}</span>
+                                  )}
+                                  {sale.buyer_name && (
+                                    <span><span className="font-semibold">{t.soldTo}:</span> {sale.buyer_name}</span>
+                                  )}
+                                </div>
+                              )}
+                              {/* Items */}
                               <div className="flex flex-col gap-1">
                                 {saleItems.map((item, idx) => (
                                   <div

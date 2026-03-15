@@ -19,6 +19,8 @@ export interface Sale {
   subtotal: number;
   vat: number;
   grand_total: number;
+  buyer_name: string;
+  seller_name: string;
 }
 
 function toSale(row: Models.DefaultRow): Sale {
@@ -30,6 +32,8 @@ function toSale(row: Models.DefaultRow): Sale {
     subtotal: row.subtotal as number,
     vat: row.vat as number,
     grand_total: row.grand_total as number,
+    buyer_name: (row.buyer_name as string) || "",
+    seller_name: (row.seller_name as string) || "",
   };
 }
 
@@ -63,7 +67,9 @@ export async function createSale(
   items: SaleItem[],
   subtotal: number,
   vat: number,
-  grand_total: number
+  grand_total: number,
+  buyer_name: string = "",
+  seller_name: string = ""
 ): Promise<Sale> {
   const row = await tablesDB.createRow({
     databaseId: DATABASE_ID,
@@ -75,6 +81,8 @@ export async function createSale(
       subtotal,
       vat,
       grand_total,
+      buyer_name,
+      seller_name,
     },
   });
   return toSale(row);
