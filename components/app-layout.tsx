@@ -3,29 +3,49 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, ScanLine, FileText, Archive, LogOut, Menu, Loader2, Globe } from "lucide-react";
+import { LayoutDashboard, Package, ScanLine, FileText, Archive, Users, UserCheck, LogOut, Menu, Loader2, Globe, ShieldAlert } from "lucide-react";
 import { getCurrentUser, logout } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { useRole } from "@/contexts/role-context";
 import type { Locale } from "@/lib/i18n";
+import type { Permission } from "@/lib/roles";
 import Logo from "./logo";
+
+export function AccessDenied() {
+  const { t } = useLanguage();
+  return (
+    <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+      <ShieldAlert className="size-12 text-muted-foreground opacity-40" />
+      <div>
+        <p className="font-semibold text-lg">{t.accessDenied}</p>
+        <p className="text-sm text-muted-foreground mt-1">{t.accessDeniedDesc}</p>
+      </div>
+    </div>
+  );
+}
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { locale, setLocale, t } = useLanguage();
+  const { can } = useRole();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const navItems = [
-    { href: "/dashboard", label: t.navDashboard, icon: LayoutDashboard },
-    { href: "/products", label: t.navProducts, icon: Package },
-    { href: "/scan", label: t.navScanProduct, icon: ScanLine },
-    { href: "/invoice", label: t.navInvoice, icon: FileText },
-    { href: "/inventory", label: t.navInventory, icon: Archive },
+  const allNavItems: { href: string; label: string; icon: React.ElementType; permission: Permission }[] = [
+    { href: "/dashboard",  label: t.navDashboard,  icon: LayoutDashboard, permission: "products_view" },
+    { href: "/products",   label: t.navProducts,   icon: Package,         permission: "products_view" },
+    { href: "/scan",       label: t.navScanProduct, icon: ScanLine,       permission: "products_add" },
+    { href: "/invoice",    label: t.navInvoice,    icon: FileText,        permission: "invoice" },
+    { href: "/inventory",  label: t.navInventory,  icon: Archive,         permission: "inventory" },
+    { href: "/customers",  label: t.navCustomers,  icon: UserCheck,       permission: "customers_view" },
+    { href: "/users",      label: t.navUsers,      icon: Users,           permission: "users_view" },
   ];
+
+  const navItems = allNavItems.filter((item) => can(item.permission));
 
   useEffect(() => {
     getCurrentUser().then((u) => {

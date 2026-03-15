@@ -6,9 +6,12 @@ import { AppLayout } from "@/components/app-layout";
 import { getSales, Sale, SaleItem } from "@/lib/sales";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { useRole } from "@/contexts/role-context";
+import { AccessDenied } from "@/components/app-layout";
 
 export default function InventoryPage() {
   const { t } = useLanguage();
+  const { can, roleLoading } = useRole();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -53,6 +56,7 @@ export default function InventoryPage() {
 
   return (
     <AppLayout>
+      {!roleLoading && !can("inventory") ? <AccessDenied /> : (
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-2xl font-bold">{t.inventoryTitle}</h1>
@@ -300,6 +304,7 @@ export default function InventoryPage() {
           )}
         </div>
       </div>
+      )}
     </AppLayout>
   );
 }

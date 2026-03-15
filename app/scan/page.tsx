@@ -10,6 +10,8 @@ import { createProduct } from "@/lib/products";
 import { uploadProductImage } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { useRole } from "@/contexts/role-context";
+import { AccessDenied } from "@/components/app-layout";
 
 type Mode = "barcode" | "photo";
 type Step = "scan" | "confirm";
@@ -17,6 +19,7 @@ type Step = "scan" | "confirm";
 export default function ScanPage() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { can, roleLoading } = useRole();
   const [mode, setMode] = useState<Mode>("barcode");
   const [step, setStep] = useState<Step>("scan");
 
@@ -82,6 +85,10 @@ export default function ScanPage() {
       setSaving(false);
     }
   };
+
+  if (!roleLoading && !can("products_add")) {
+    return <AppLayout><AccessDenied /></AppLayout>;
+  }
 
   return (
     <AppLayout>

@@ -9,6 +9,7 @@ import { getProduct, updateProduct, deleteProduct, Product } from "@/lib/product
 import { getProductImageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { useRole } from "@/contexts/role-context";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -25,6 +26,7 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const { t } = useLanguage();
+  const { can } = useRole();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -209,7 +211,7 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            <form onSubmit={handleSave} className="flex flex-col gap-4 rounded-2xl border border-border p-5">
+            {can("products_edit") && <form onSubmit={handleSave} className="flex flex-col gap-4 rounded-2xl border border-border p-5">
               <h2 className="font-semibold">{t.editDetails}</h2>
 
               <div className="flex flex-col gap-1.5">
@@ -288,10 +290,10 @@ export default function ProductDetailPage() {
                   </>
                 )}
               </button>
-            </form>
+            </form>}
 
-            {/* Restock section */}
-            <div className="rounded-2xl border border-border p-5 flex flex-col gap-4">
+            {/* Restock section — admin + manager */}
+            {can("products_add") && <div className="rounded-2xl border border-border p-5 flex flex-col gap-4">
               <div>
                 <h2 className="font-semibold">{t.restockTitle}</h2>
                 <p className="text-sm text-muted-foreground">{t.restockDesc}</p>
@@ -340,9 +342,9 @@ export default function ProductDetailPage() {
                   <><Plus className="size-4" /> {t.addStockBtn}</>
                 )}
               </button>
-            </div>
+            </div>}
 
-            <div className="rounded-2xl border border-destructive/30 p-5">
+            {can("products_delete") && <div className="rounded-2xl border border-destructive/30 p-5">
               <h2 className="font-semibold text-destructive mb-1">{t.dangerZone}</h2>
               <p className="text-sm text-muted-foreground mb-4">{t.dangerDesc}</p>
 
@@ -392,7 +394,7 @@ export default function ProductDetailPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </div>
+            </div>}
           </div>
         )}
       </div>

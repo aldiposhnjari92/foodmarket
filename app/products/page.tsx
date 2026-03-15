@@ -9,9 +9,11 @@ import { getProductImageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/language-context";
+import { useRole } from "@/contexts/role-context";
 
 export default function ProductsPage() {
   const { t } = useLanguage();
+  const { can } = useRole();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -48,13 +50,15 @@ export default function ProductsPage() {
             <h1 className="text-2xl font-bold">{t.navProducts}</h1>
             <p className="text-sm text-muted-foreground">{t.itemsInStock(products.length)}</p>
           </div>
-          <Link
-            href="/scan"
-            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <ScanLine className="size-4" />
-            {t.addProduct}
-          </Link>
+          {can("products_add") && (
+            <Link
+              href="/scan"
+              className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <ScanLine className="size-4" />
+              {t.addProduct}
+            </Link>
+          )}
         </div>
 
         <div className="relative w-full max-w-sm">
@@ -140,17 +144,19 @@ export default function ProductsPage() {
                       })}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleDelete(product.$id)}
-                        disabled={deletingId === product.$id}
-                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
-                      >
-                        {deletingId === product.$id ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="size-4" />
-                        )}
-                      </button>
+                      {can("products_delete") && (
+                        <button
+                          onClick={() => handleDelete(product.$id)}
+                          disabled={deletingId === product.$id}
+                          className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+                        >
+                          {deletingId === product.$id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-4" />
+                          )}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
