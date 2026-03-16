@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
+import Image from "next/image";
 import { Product } from "@/lib/products";
 import { getProductImageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
@@ -11,9 +12,10 @@ interface ProductCardProps {
   product: Product;
   onDelete: (id: string) => void;
   deleting?: boolean;
+  priority?: boolean;
 }
 
-export function ProductCard({ product, onDelete, deleting }: ProductCardProps) {
+export function ProductCard({ product, onDelete, deleting, priority = false }: ProductCardProps) {
   const [confirming, setConfirming] = useState(false);
   const { t } = useLanguage();
 
@@ -33,12 +35,13 @@ export function ProductCard({ product, onDelete, deleting }: ProductCardProps) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {product.image_id && (
-            <img
+            <Image
               src={getProductImageUrl(product.image_id)}
               alt={product.name}
-              width={30}
-              height={30}
+              width={40}
+              height={40}
               className="rounded-md object-cover shrink-0"
+              priority={priority}
             />
           )}
           <div className="flex-1 min-w-0">

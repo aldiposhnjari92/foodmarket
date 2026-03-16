@@ -52,12 +52,13 @@ export function ProductList({ initialProducts }: ProductListProps) {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((product) => (
+          {filtered.map((product, index) => (
             <ProductCard
               key={product.$id}
               product={product}
               onDelete={handleDelete}
               deleting={deletingId === product.$id}
+              priority={index < 2}
             />
           ))}
         </div>
