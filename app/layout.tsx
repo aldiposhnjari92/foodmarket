@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/contexts/language-context";
 import { RoleProvider } from "@/contexts/role-context";
 
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -35,6 +36,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Analytics/>
+        <SpeedInsights/>
         <LanguageProvider>
           <RoleProvider>{children}</RoleProvider>
         </LanguageProvider>
