@@ -10,14 +10,47 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
 import { AccessDenied } from "@/components/app-layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-type DatePreset = "all" | "today" | "week" | "month" | "custom";
+type DatePreset = "all" | "today" | "yesterday" | "week" | "month" | "custom";
+
+type DatePresetDef = { value: DatePreset; tKey: "dateAll" | "dateToday" | "dateYesterday" | "dateWeek" | "dateMonth" | "dateCustom" };
+
+const DATE_PRESETS: DatePresetDef[] = [
+  { value: "all", tKey: "dateAll" },
+  { value: "today", tKey: "dateToday" },
+  { value: "yesterday", tKey: "dateYesterday" },
+  { value: "week", tKey: "dateWeek" },
+  { value: "month", tKey: "dateMonth" },
+  { value: "custom", tKey: "dateCustom" },
+];
 
 function getPresetRange(preset: DatePreset): { from: Date | null; to: Date | null } {
   const now = new Date();
   if (preset === "today") {
     const from = new Date(now); from.setHours(0, 0, 0, 0);
     const to = new Date(now); to.setHours(23, 59, 59, 999);
+    return { from, to };
+  }
+  if (preset === "yesterday") {
+    const from = new Date(now); from.setDate(now.getDate() - 1); from.setHours(0, 0, 0, 0);
+    const to = new Date(now); to.setDate(now.getDate() - 1); to.setHours(23, 59, 59, 999);
     return { from, to };
   }
   if (preset === "week") {
@@ -63,20 +96,17 @@ export default function InventoryPage() {
     }
   }, [role, userId, isAdmin, roleLoading]);
 
-  // Unique customer names for the suggestion list
   const customerNames = useMemo(() => {
-    const names = sales
+    return sales
       .map((s) => s.buyer_name)
       .filter(Boolean)
       .filter((v, i, arr) => arr.indexOf(v) === i)
       .sort();
-    return names;
   }, [sales]);
 
   const filtered = useMemo(() => {
     let result = sales;
 
-    // Date filter
     if (datePreset !== "all") {
       let from: Date | null = null;
       let to: Date | null = null;
@@ -94,12 +124,10 @@ export default function InventoryPage() {
       });
     }
 
-    // Seller filter (admin only)
     if (sellerFilter) {
       result = result.filter((s) => s.seller_id === sellerFilter);
     }
 
-    // Customer filter
     if (customerFilter.trim()) {
       const q = customerFilter.toLowerCase();
       result = result.filter((s) => s.buyer_name.toLowerCase().includes(q));
@@ -131,7 +159,7 @@ export default function InventoryPage() {
           <p className="text-sm text-muted-foreground">{t.inventoryDesc}</p>
         </div>
 
-        {/* Summary stats — reflect current filter */}
+        {/* Summary stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
             <div className="mb-2 flex items-center gap-2 text-primary">
@@ -168,70 +196,64 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        {/* Seller filter — admin only */}
-        {isAdmin && sellers.length > 0 && (
-          <div className="flex items-center gap-3">
-            <select
-              value={sellerFilter}
-              onChange={(e) => setSellerFilter(e.target.value)}
-              className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring max-w-xs"
+        {/* Filters row */}
+        <div className="flex flex-wrap gap-3 items-end">
+          {/* Seller filter — admin only */}
+          {isAdmin && sellers.length > 0 && (
+            <Select
+              value={sellerFilter || "__all__"}
+              onValueChange={(v) => setSellerFilter(v === "__all__" ? "" : v)}
             >
-              <option value="">All sellers</option>
-              {sellers.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-            {sellerFilter && (
-              <button
-                onClick={() => setSellerFilter("")}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        )}
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder={t.allSellers} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">{t.allSellers}</SelectItem>
+                {sellers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
-        {/* Date filter */}
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap gap-2">
-            {(["all", "today", "week", "month", "custom"] as DatePreset[]).map((preset) => (
-              <button
-                key={preset}
-                onClick={() => setDatePreset(preset)}
-                className={cn(
-                  "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
-                  datePreset === preset
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                )}
+          {/* Date preset buttons */}
+          <div className="flex flex-wrap gap-1.5">
+            {DATE_PRESETS.map((p) => (
+              <Button
+                key={p.value}
+                size="sm"
+                variant={datePreset === p.value ? "default" : "outline"}
+                onClick={() => setDatePreset(p.value)}
               >
-                {preset === "all" ? "All time" : preset === "today" ? "Today" : preset === "week" ? "Last 7 days" : preset === "month" ? "Last 30 days" : "Custom range"}
-              </button>
+                {t[p.tKey]}
+              </Button>
             ))}
           </div>
+
+          {/* Custom date range */}
           {datePreset === "custom" && (
             <div className="flex flex-wrap items-center gap-2">
-              <input
+              <Input
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="w-36 h-8 text-sm"
               />
-              <span className="text-xs text-muted-foreground">to</span>
-              <input
+              <span className="text-xs text-muted-foreground">{t.dateRangeTo}</span>
+              <Input
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="w-36 h-8 text-sm"
               />
               {(customFrom || customTo) && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => { setCustomFrom(""); setCustomTo(""); }}
-                  className="text-xs text-muted-foreground hover:text-foreground"
                 >
-                  Clear
-                </button>
+                  {t.clear}
+                </Button>
               )}
             </div>
           )}
@@ -248,147 +270,145 @@ export default function InventoryPage() {
           />
           {customerFilter && (
             <span className="text-sm text-muted-foreground">
-              {filtered.length} {filtered.length === 1 ? "result" : "results"}
+              {t.filterResults(filtered.length)}
             </span>
           )}
         </div>
 
         {/* Sales history table */}
-        <div>
-          {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> {t.loading}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border py-16 text-center">
-              <Receipt className="size-10 mx-auto opacity-20 mb-3" />
-              <p className="text-sm text-muted-foreground">
-                {customerFilter ? t.noProductsMatching(customerFilter) : t.noSalesYet}
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.invoiceNo}</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.saleDate}</th>
-                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">{t.customer}</th>
-                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">{t.seller}</th>
-                    <th className="hidden px-4 py-3 text-right font-medium text-muted-foreground sm:table-cell">{t.itemsCount}</th>
-                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">{t.revenue}</th>
-                    <th className="px-4 py-3 w-10" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((sale, i) => {
-                    let saleItems: SaleItem[] = [];
-                    try { saleItems = JSON.parse(sale.items_json); } catch { /* skip */ }
-                    const isExpanded = expandedId === sale.$id;
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> {t.loading}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border py-16 text-center">
+            <Receipt className="size-10 mx-auto opacity-20 mb-3" />
+            <p className="text-sm text-muted-foreground">
+              {customerFilter ? t.noProductsMatching(customerFilter) : t.noSalesYet}
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead>{t.invoiceNo}</TableHead>
+                  <TableHead>{t.saleDate}</TableHead>
+                  <TableHead>{t.customer}</TableHead>
+                  <TableHead>{t.seller}</TableHead>
+                  <TableHead className="text-right">{t.itemsCount}</TableHead>
+                  <TableHead className="text-right">{t.revenue}</TableHead>
+                  <TableHead className="w-8" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((sale, i) => {
+                  let saleItems: SaleItem[] = [];
+                  try { saleItems = JSON.parse(sale.items_json); } catch { /* skip */ }
+                  const isExpanded = expandedId === sale.$id;
 
-                    return (
-                      <React.Fragment key={sale.$id}>
-                        <tr
-                          className={cn(
-                            "border-t border-border cursor-pointer hover:bg-muted/30 transition-colors",
-                            i % 2 !== 0 && "bg-muted/10"
-                          )}
-                          onClick={() => toggleExpand(sale.$id)}
-                        >
-                          <td className="px-4 py-3 font-medium font-mono text-xs">
-                            {sale.invoice_number}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                  return (
+                    <React.Fragment key={sale.$id}>
+                      <TableRow
+                        className={cn(
+                          "cursor-pointer",
+                          i % 2 !== 0 && "bg-muted/10"
+                        )}
+                        onClick={() => toggleExpand(sale.$id)}
+                      >
+                        <TableCell className="font-mono text-xs font-medium">
+                          {sale.invoice_number}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          <span className="whitespace-nowrap">
                             {new Date(sale.$createdAt).toLocaleDateString(undefined, {
                               day: "numeric",
                               month: "short",
                               year: "numeric",
                             })}
-                            <span className="ml-2 text-xs">
-                              {new Date(sale.$createdAt).toLocaleTimeString(undefined, {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                          </span>
+                          <span className="ml-2 text-xs">
+                            {new Date(sale.$createdAt).toLocaleTimeString(undefined, {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {sale.buyer_name ? (
+                            <span className="flex items-center gap-1.5">
+                              <User className="size-3 text-muted-foreground shrink-0" />
+                              {sale.buyer_name}
                             </span>
-                          </td>
-                          <td className="hidden px-4 py-3 md:table-cell">
-                            {sale.buyer_name ? (
-                              <span className="flex items-center gap-1.5">
-                                <User className="size-3 text-muted-foreground shrink-0" />
-                                {sale.buyer_name}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </td>
-                          <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell">
-                            {sale.seller_name || "—"}
-                          </td>
-                          <td className="hidden px-4 py-3 text-right sm:table-cell">
-                            {saleItems.reduce((s, i) => s + i.qty_sold, 0)} {t.soldItems}
-                          </td>
-                          <td className="px-4 py-3 text-right font-semibold">
-                            L {sale.grand_total.toFixed(2)}
-                          </td>
-                          <td className="px-4 py-3 text-right text-muted-foreground">
-                            {isExpanded ? (
-                              <ChevronUp className="size-4 ml-auto" />
-                            ) : (
-                              <ChevronDown className="size-4 ml-auto" />
-                            )}
-                          </td>
-                        </tr>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {sale.seller_name || "—"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {saleItems.reduce((s, i) => s + i.qty_sold, 0)} {t.soldItems}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          L {sale.grand_total.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {isExpanded ? (
+                            <ChevronUp className="size-4 ml-auto" />
+                          ) : (
+                            <ChevronDown className="size-4 ml-auto" />
+                          )}
+                        </TableCell>
+                      </TableRow>
 
-                        {isExpanded && (
-                          <tr key={`${sale.$id}-detail`} className="border-t border-border bg-muted/5">
-                            <td colSpan={7} className="px-6 py-4">
-                              {/* Parties row */}
-                              {(sale.buyer_name || sale.seller_name) && (
-                                <div className="flex gap-6 mb-3 pb-3 border-b border-border text-xs text-muted-foreground">
-                                  {sale.seller_name && (
-                                    <span><span className="font-semibold">{t.soldBy}:</span> {sale.seller_name}</span>
-                                  )}
-                                  {sale.buyer_name && (
-                                    <span><span className="font-semibold">{t.soldTo}:</span> {sale.buyer_name}</span>
-                                  )}
+                      {isExpanded && (
+                        <TableRow className="bg-muted/5 hover:bg-muted/5">
+                          <TableCell colSpan={7} className="px-6 py-4">
+                            {(sale.buyer_name || sale.seller_name) && (
+                              <div className="flex flex-wrap gap-6 mb-3 pb-3 border-b border-border text-xs text-muted-foreground">
+                                {sale.seller_name && (
+                                  <span><span className="font-semibold">{t.soldBy}:</span> {sale.seller_name}</span>
+                                )}
+                                {sale.buyer_name && (
+                                  <span><span className="font-semibold">{t.soldTo}:</span> {sale.buyer_name}</span>
+                                )}
+                              </div>
+                            )}
+                            <div className="flex flex-col gap-1">
+                              {saleItems.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-center justify-between py-1 text-sm"
+                                >
+                                  <span className="text-foreground">
+                                    {item.product_name}
+                                    <span className="ml-2 text-xs text-muted-foreground">
+                                      ×{item.qty_sold} @ L {item.unit_price.toFixed(2)}
+                                    </span>
+                                  </span>
+                                  <span className="font-medium tabular-nums">
+                                    L {item.total.toFixed(2)}
+                                  </span>
                                 </div>
-                              )}
-                              {/* Items */}
-                              <div className="flex flex-col gap-1">
-                                {saleItems.map((item, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center justify-between py-1 text-sm"
-                                  >
-                                    <span className="text-foreground">
-                                      {item.product_name}
-                                      <span className="ml-2 text-xs text-muted-foreground">
-                                        ×{item.qty_sold} @ L {item.unit_price.toFixed(2)}
-                                      </span>
-                                    </span>
-                                    <span className="font-medium tabular-nums">
-                                      L {item.total.toFixed(2)}
-                                    </span>
-                                  </div>
-                                ))}
-                                <div className="mt-2 pt-2 border-t border-border">
-                                  <div className="flex justify-between text-sm font-bold">
-                                    <span>{t.grandTotal}</span>
-                                    <span>L {sale.grand_total.toFixed(2)}</span>
-                                  </div>
+                              ))}
+                              <div className="mt-2 pt-2 border-t border-border">
+                                <div className="flex justify-between text-sm font-bold">
+                                  <span>{t.grandTotal}</span>
+                                  <span>L {sale.grand_total.toFixed(2)}</span>
                                 </div>
                               </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
       )}
     </AppLayout>

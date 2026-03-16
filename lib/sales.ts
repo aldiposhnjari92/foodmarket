@@ -50,8 +50,14 @@ export async function getSales(sellerId?: string): Promise<Sale[]> {
   return response.rows.map(toSale);
 }
 
-export async function getSalesTotals(sellerId?: string): Promise<{ unitsSold: number; revenue: number }> {
-  const sales = await getSales(sellerId);
+export async function getSalesTotals(
+  sellerId?: string,
+  dateFrom?: string,
+  dateTo?: string
+): Promise<{ unitsSold: number; revenue: number }> {
+  let sales = await getSales(sellerId);
+  if (dateFrom) sales = sales.filter((s) => new Date(s.$createdAt) >= new Date(dateFrom));
+  if (dateTo) sales = sales.filter((s) => new Date(s.$createdAt) <= new Date(dateTo));
   let unitsSold = 0;
   let revenue = 0;
   for (const sale of sales) {

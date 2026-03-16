@@ -6,11 +6,19 @@ import { ScanLine, Trash2, Package, Loader2, Search, PlusCircle } from "lucide-r
 import { AppLayout } from "@/components/app-layout";
 import { getProducts, deleteProduct, Product } from "@/lib/products";
 import { getProductImageUrl } from "@/lib/storage";
-import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function ProductsPage() {
   const { t } = useLanguage();
@@ -48,86 +56,76 @@ export default function ProductsPage() {
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">{t.navProducts}</h1>
             <p className="text-sm text-muted-foreground">{t.itemsInStock(products.length)}</p>
           </div>
           {can("products_add") && (
             <div className="flex items-center gap-2">
-              <Link
-                href="/scan?manual=true"
-                className="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-muted transition-colors"
-              >
-                <PlusCircle className="size-4" />
-                {t.addManually}
-              </Link>
-              <Link
-                href="/scan"
-                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                <ScanLine className="size-4" />
-                {t.addProduct}
-              </Link>
+              <Button variant="outline" asChild>
+                <Link href="/scan?manual=true">
+                  <PlusCircle />
+                  {t.addManually}
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/scan">
+                  <ScanLine />
+                  {t.addProduct}
+                </Link>
+              </Button>
             </div>
           )}
         </div>
 
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <input
+          <Input
             type="text"
             placeholder={t.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-input bg-background pl-9 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all placeholder:text-muted-foreground"
+            className="pl-9"
           />
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground w-10" />
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.colName}</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">{t.colPrice}</th>
-                <th className="hidden px-4 py-3 text-right font-medium text-muted-foreground sm:table-cell">{t.colStock}</th>
-                <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">
-                  {t.colDateAdded}
-                </th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
+        <div className="rounded-xl border border-border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="w-14" />
+                <TableHead>{t.colName}</TableHead>
+                <TableHead className="text-right">{t.colPrice}</TableHead>
+                <TableHead className="text-right">{t.colStock}</TableHead>
+                <TableHead>{t.colDateAdded}</TableHead>
+                <TableHead className="w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-14 text-center text-muted-foreground">
+                <TableRow>
+                  <TableCell colSpan={6} className="py-14 text-center text-muted-foreground">
                     <Loader2 className="inline size-5 animate-spin" />
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-14 text-center">
+                <TableRow>
+                  <TableCell colSpan={6} className="py-14 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Package className="size-8 opacity-40" />
                       <p className="text-sm">
                         {search ? t.noProductsMatching(search) : t.noProductsAdd}
                       </p>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
-                filtered.map((product, i) => (
-                  <tr
-                    key={product.$id}
-                    className={cn(
-                      "border-t border-border transition-colors hover:bg-muted/30",
-                      i % 2 !== 0 && "bg-muted/10"
-                    )}
-                  >
-                    <td className="px-4 py-3">
+                filtered.map((product) => (
+                  <TableRow key={product.$id}>
+                    <TableCell>
                       {product.image_id ? (
-                        <div className="relative size-15 rounded-md overflow-hidden shrink-0">
+                        <div className="relative size-10 rounded-md overflow-hidden shrink-0">
                           <Image
                             src={getProductImageUrl(product.image_id)}
                             alt={product.name}
@@ -136,45 +134,50 @@ export default function ProductsPage() {
                           />
                         </div>
                       ) : (
-                        <div className="size-15 rounded-md bg-muted flex items-center justify-center">
+                        <div className="size-10 rounded-md bg-muted flex items-center justify-center">
                           <Package className="size-4 text-muted-foreground" />
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3 font-medium">
-                      <Link href={`/products/${product.$id}`} className="hover:text-primary hover:underline transition-colors">
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <Link
+                        href={`/products/${product.$id}`}
+                        className="hover:text-primary hover:underline transition-colors"
+                      >
                         {product.name}
                       </Link>
-                    </td>
-                    <td className="px-4 py-3 text-right">L {product.price.toFixed(2)}</td>
-                    <td className="hidden px-4 py-3 text-right sm:table-cell">{product.quantity}</td>
-                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                    </TableCell>
+                    <TableCell className="text-right">L {product.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{product.quantity}</TableCell>
+                    <TableCell className="text-muted-foreground">
                       {new Date(product.$createdAt).toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
                         year: "numeric",
                       })}
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                    </TableCell>
+                    <TableCell className="text-right">
                       {can("products_delete") && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
                           onClick={() => handleDelete(product.$id)}
                           disabled={deletingId === product.$id}
-                          className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                         >
                           {deletingId === product.$id ? (
                             <Loader2 className="size-4 animate-spin" />
                           ) : (
                             <Trash2 className="size-4" />
                           )}
-                        </button>
+                        </Button>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
     </AppLayout>

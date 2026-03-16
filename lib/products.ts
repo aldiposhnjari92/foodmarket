@@ -32,7 +32,7 @@ export async function getProducts(ownerId?: string): Promise<Product[]> {
     tableId: TABLE_ID,
     queries,
   });
-  return response.rows.map(toProduct);
+  return response.rows.map(toProduct).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getProduct(id: string): Promise<Product> {

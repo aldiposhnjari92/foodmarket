@@ -16,7 +16,9 @@ import { AppLayout } from "@/components/app-layout";
 import { getProducts, sellProducts, Product } from "@/lib/products";
 import { createSale, SaleItem } from "@/lib/sales";
 import { getCustomers, Customer } from "@/lib/customers";
+import { getCurrentUser } from "@/lib/auth";
 import { CustomerCombobox } from "@/components/customer-combobox";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
@@ -49,6 +51,11 @@ export default function InvoicePage() {
   const [buyerName, setBuyerName] = useState("");
   const [sellerName, setSellerName] = useState("");
 
+  // Raw string state for number inputs — lets users clear and retype freely
+  const [pendingQtys, setPendingQtys] = useState<Record<string, string>>({});
+  const [rawQtys, setRawQtys] = useState<Record<string, string>>({});
+  const [rawPrices, setRawPrices] = useState<Record<string, string>>({});
+
   // Buyer autocomplete
   const [customers, setCustomers] = useState<Customer[]>([]);
   const customerNames = customers.map((c) => c.name);
@@ -71,6 +78,9 @@ export default function InvoicePage() {
     getProducts(ownerId)
       .then(setProducts)
       .finally(() => setLoading(false));
+    getCurrentUser().then((user) => {
+      if (user?.name) setSellerName(user.name);
+    });
   }, [role, userId]);
 
   useEffect(() => {
@@ -81,18 +91,31 @@ export default function InvoicePage() {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // ── Pending qty helpers (product list) ──────────────────────────────────────
+  const getPendingQtyRaw = (id: string) => pendingQtys[id] ?? "1";
+
+  const commitPendingQty = (id: string, stock: number) => {
+    const raw = pendingQtys[id] ?? "1";
+    const n = parseInt(raw, 10);
+    const clamped = isNaN(n) || n < 1 ? 1 : Math.min(n, stock);
+    setPendingQtys((prev) => ({ ...prev, [id]: String(clamped) }));
+  };
+
+  // ── Add item ────────────────────────────────────────────────────────────────
   const addItem = (product: Product) => {
+    const raw = pendingQtys[product.$id] ?? "1";
+    const qty = Math.max(1, Math.min(parseInt(raw, 10) || 1, product.quantity));
     setItems((prev) => {
       const existing = prev.find((i) => i.product.$id === product.$id);
       if (existing) {
         return prev.map((i) =>
           i.product.$id === product.$id
-            ? { ...i, qtySold: Math.min(i.qtySold + 1, i.product.quantity) }
+            ? { ...i, qtySold: Math.min(i.qtySold + qty, i.product.quantity) }
             : i
         );
       }
       if (product.quantity < 1) return prev;
-      return [...prev, { product, qtySold: 1 }];
+      return [...prev, { product, qtySold: qty }];
     });
   };
 
@@ -116,6 +139,7 @@ export default function InvoicePage() {
     setShowManualForm(false);
   };
 
+  // ── Line item qty ────────────────────────────────────────────────────────────
   const updateQty = (id: string, delta: number) => {
     setItems((prev) =>
       prev
@@ -126,11 +150,26 @@ export default function InvoicePage() {
         })
         .filter((i) => i.qtySold > 0)
     );
+    // Sync raw display
+    setRawQtys((prev) => {
+      const item = items.find((i) => i.product.$id === id);
+      if (!item) return prev;
+      const max = item.isManual ? Infinity : item.product.quantity;
+      const next = Math.max(0, Math.min(item.qtySold + delta, max));
+      return { ...prev, [id]: String(next) };
+    });
   };
 
-  const setQtyDirect = (id: string, value: string) => {
-    const n = parseInt(value, 10);
-    if (isNaN(n) || n < 0) return;
+  const commitQty = (id: string) => {
+    const raw = rawQtys[id];
+    if (raw === undefined) return;
+    const n = parseInt(raw, 10);
+    if (isNaN(n) || n < 1) {
+      // Reset raw to current committed value
+      const item = items.find((i) => i.product.$id === id);
+      if (item) setRawQtys((prev) => ({ ...prev, [id]: String(item.qtySold) }));
+      return;
+    }
     setItems((prev) =>
       prev
         .map((i) => {
@@ -142,19 +181,41 @@ export default function InvoicePage() {
     );
   };
 
-  const updatePrice = (id: string, value: string) => {
-    const n = parseFloat(value);
+  const getQtyDisplay = (item: InvoiceItem) =>
+    rawQtys[item.product.$id] !== undefined
+      ? rawQtys[item.product.$id]
+      : String(item.qtySold);
+
+  // ── Line item price ──────────────────────────────────────────────────────────
+  const getPriceDisplay = (item: InvoiceItem) =>
+    rawPrices[item.product.$id] !== undefined
+      ? rawPrices[item.product.$id]
+      : item.customPrice !== undefined
+      ? String(item.customPrice)
+      : String(item.product.price);
+
+  const commitPrice = (id: string) => {
+    const raw = rawPrices[id];
+    if (raw === undefined) return;
+    const n = parseFloat(raw);
     setItems((prev) =>
       prev.map((i) =>
         i.product.$id === id
-          ? { ...i, customPrice: isNaN(n) || value === "" ? undefined : n }
+          ? { ...i, customPrice: isNaN(n) || raw === "" ? undefined : n }
           : i
       )
     );
+    setRawPrices((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   };
 
   const removeItem = (id: string) => {
     setItems((prev) => prev.filter((i) => i.product.$id !== id));
+    setRawQtys((prev) => { const n = { ...prev }; delete n[id]; return n; });
+    setRawPrices((prev) => { const n = { ...prev }; delete n[id]; return n; });
   };
 
   const effectivePrice = (item: InvoiceItem) =>
@@ -162,9 +223,7 @@ export default function InvoicePage() {
 
   const grandTotal = items.reduce((sum, i) => sum + effectivePrice(i) * i.qtySold, 0);
 
-  const handlePrint = () => window.print();
-
-  const handleConfirmSale = async () => {
+  const handleConfirmSale = async (andPrint = false) => {
     if (items.length === 0) {
       setError(t.noItemsSelected);
       return;
@@ -172,7 +231,6 @@ export default function InvoicePage() {
     setError(null);
     setConfirming(true);
     try {
-      // Deduct inventory for non-manual items
       const inventoryItems = items.filter((i) => !i.isManual);
       if (inventoryItems.length > 0) {
         await sellProducts(
@@ -185,7 +243,6 @@ export default function InvoicePage() {
         );
       }
 
-      // Record the sale (best-effort — requires SALES_TABLE_ID env var)
       const saleItems: SaleItem[] = items.map((i) => ({
         product_id: i.product.$id,
         product_name: i.product.name,
@@ -199,8 +256,13 @@ export default function InvoicePage() {
         // Sales table may not be configured yet — sale still counts for inventory
       }
 
+      // Print before clearing items so the invoice still has content
+      if (andPrint) window.print();
+
       setConfirmed(true);
       setItems([]);
+      setRawQtys({});
+      setRawPrices({});
       const ownerId = role === "admin" ? undefined : userId ?? undefined;
       const updated = await getProducts(ownerId);
       setProducts(updated);
@@ -215,16 +277,16 @@ export default function InvoicePage() {
   return (
     <AppLayout>
       {/* Page header — hidden when printing */}
-      <div className="print:hidden mb-6">
+      <div className="print:hidden mb-4 sm:mb-6">
         <h1 className="text-2xl font-bold">{t.invoiceTitle}</h1>
         <p className="text-sm text-muted-foreground">{t.invoiceDesc}</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+      <div className="flex flex-col xl:flex-row gap-6 items-start">
         {/* ── Product selector ── */}
-        <div className="print:hidden flex-1 min-w-0">
+        <div className="print:hidden w-full xl:flex-1 xl:min-w-0">
           {/* Parties */}
-          <div className="mb-4 grid grid-cols-2 gap-3">
+          <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 {t.soldBy}
@@ -268,7 +330,7 @@ export default function InvoicePage() {
               <span className="text-sm">{t.loading}</span>
             </div>
           ) : (
-            <div className="flex flex-col gap-2 max-h-130 overflow-y-auto pr-1">
+            <div className="flex flex-col gap-2 max-h-[40vh] sm:max-h-[50vh] xl:max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
               {filtered.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">
                   {search ? t.noProductsMatching(search) : t.noProductsAdd}
@@ -278,39 +340,55 @@ export default function InvoicePage() {
                   const inCart = items.find((i) => i.product.$id === product.$id);
                   const noStock = product.quantity < 1;
                   return (
-                    <button
+                    <div
                       key={product.$id}
-                      onClick={() => !noStock && addItem(product)}
-                      disabled={noStock}
                       className={cn(
-                        "flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors",
+                        "flex items-center justify-between rounded-xl border px-3 sm:px-4 py-2.5 transition-colors",
                         noStock
-                          ? "border-border opacity-40 cursor-not-allowed"
+                          ? "border-border opacity-40"
                           : inCart
                           ? "border-primary bg-primary/5"
-                          : "border-border hover:bg-muted cursor-pointer"
+                          : "border-border"
                       )}
                     >
-                      <div>
-                        <p className="text-sm font-medium">{product.name}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{product.name}</p>
                         <p className="text-xs text-muted-foreground">
                           L {product.price.toFixed(2)} · {t.stockLabel}: {product.quantity}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 ml-2 shrink-0">
                         {inCart && (
                           <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground font-medium">
                             ×{inCart.qtySold}
                           </span>
                         )}
-                        <Plus
+                        {!noStock && (
+                          <Input
+                            type="number"
+                            min="1"
+                            max={product.quantity}
+                            value={getPendingQtyRaw(product.$id)}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              setPendingQtys((prev) => ({ ...prev, [product.$id]: e.target.value }))
+                            }
+                            onBlur={() => commitPendingQty(product.$id, product.quantity)}
+                            className="w-16 text-center tabular-nums"
+                          />
+                        )}
+                        <button
+                          onClick={() => !noStock && addItem(product)}
+                          disabled={noStock}
                           className={cn(
-                            "size-4",
-                            noStock ? "opacity-30" : "text-primary"
+                            "rounded-lg p-1.5 transition-colors",
+                            noStock ? "cursor-not-allowed" : "hover:bg-primary/10 text-primary"
                           )}
-                        />
+                        >
+                          <Plus className="size-4" />
+                        </button>
                       </div>
-                    </button>
+                    </div>
                   );
                 })
               )}
@@ -330,23 +408,23 @@ export default function InvoicePage() {
                   className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
                 <div className="flex gap-2">
-                  <input
+                  <Input
                     type="number"
                     value={manualPrice}
                     onChange={(e) => setManualPrice(e.target.value)}
                     placeholder={t.priceLabel}
                     min="0"
                     step="0.01"
-                    className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1"
                   />
-                  <input
+                  <Input
                     type="number"
                     value={manualQty}
                     onChange={(e) => setManualQty(e.target.value)}
                     placeholder={t.quantityLabel}
                     min="1"
                     step="1"
-                    className="w-20 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    className="w-24"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -378,13 +456,13 @@ export default function InvoicePage() {
         </div>
 
         {/* ── Invoice preview + actions ── */}
-        <div className="w-full lg:w-120 shrink-0">
+        <div className="w-full xl:w-[460px] shrink-0">
           {/* Printable invoice */}
-          <div className="rounded-2xl border border-border bg-white p-6 print:rounded-none print:border-none print:shadow-none print:p-8">
+          <div className="rounded-2xl border border-border bg-white p-4 sm:p-6 print:rounded-none print:border-none print:shadow-none print:p-8">
             {/* Header */}
-            <div className="flex items-start justify-between mb-6 print:mb-10">
+            <div className="flex items-start justify-between mb-4 sm:mb-6 print:mb-10">
               <div>
-                <h2 className="text-xl font-bold tracking-tight print:text-2xl">
+                <h2 className="text-lg sm:text-xl font-bold tracking-tight print:text-2xl">
                   {t.appName}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5 print:text-sm">
@@ -392,7 +470,7 @@ export default function InvoicePage() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold">
+                <p className="text-xs sm:text-sm font-semibold">
                   {t.invoiceNumber} {invoiceNumber}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -408,19 +486,19 @@ export default function InvoicePage() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">
                     {t.soldBy}
                   </p>
-                  <p className="text-sm font-medium">{sellerName || "—"}</p>
+                  <p className="text-sm font-medium break-words">{sellerName || "—"}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">
                     {t.soldTo}
                   </p>
-                  <p className="text-sm font-medium">{buyerName || "—"}</p>
+                  <p className="text-sm font-medium break-words">{buyerName || "—"}</p>
                 </div>
               </div>
             )}
 
             {/* Column headers */}
-            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 mb-1">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 sm:gap-x-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 mb-1">
               <span>{t.colName}</span>
               <span className="text-right">{t.quantityLabel}</span>
               <span className="text-right">{t.unitPrice}</span>
@@ -438,7 +516,7 @@ export default function InvoicePage() {
                 {items.map((item) => (
                   <div
                     key={item.product.$id}
-                    className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center py-2.5"
+                    className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 sm:gap-x-4 items-center py-2.5"
                   >
                     {/* Name + optional manual badge */}
                     <div className="min-w-0">
@@ -451,20 +529,23 @@ export default function InvoicePage() {
                     </div>
 
                     {/* Qty controls — screen only */}
-                    <div className="flex items-center gap-1 print:hidden">
+                    <div className="flex items-center gap-0.5 sm:gap-1 print:hidden">
                       <button
                         onClick={() => updateQty(item.product.$id, -1)}
                         className="rounded p-0.5 hover:bg-muted transition-colors"
                       >
                         <Minus className="size-3" />
                       </button>
-                      <input
+                      <Input
                         type="number"
-                        value={item.qtySold}
+                        value={getQtyDisplay(item)}
                         min="1"
                         max={item.isManual ? undefined : item.product.quantity}
-                        onChange={(e) => setQtyDirect(item.product.$id, e.target.value)}
-                        className="w-10 text-center text-sm tabular-nums rounded border border-input bg-background px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring"
+                        onChange={(e) =>
+                          setRawQtys((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
+                        }
+                        onBlur={() => commitQty(item.product.$id)}
+                        className="w-16 text-center tabular-nums"
                       />
                       <button
                         onClick={() => updateQty(item.product.$id, 1)}
@@ -480,13 +561,16 @@ export default function InvoicePage() {
 
                     {/* Editable price — screen only */}
                     <div className="flex flex-col items-end print:hidden">
-                      <input
+                      <Input
                         type="number"
-                        value={item.customPrice !== undefined ? item.customPrice : item.product.price}
+                        value={getPriceDisplay(item)}
                         min="0"
                         step="0.01"
-                        onChange={(e) => updatePrice(item.product.$id, e.target.value)}
-                        className="w-20 text-right text-sm tabular-nums rounded border border-input bg-background px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-ring"
+                        onChange={(e) =>
+                          setRawPrices((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
+                        }
+                        onBlur={() => commitPrice(item.product.$id)}
+                        className="w-24 text-right tabular-nums"
                       />
                       {item.customPrice !== undefined && (
                         <span className="text-xs text-muted-foreground line-through">
@@ -499,7 +583,7 @@ export default function InvoicePage() {
                       L {effectivePrice(item).toFixed(2)}
                     </span>
 
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex items-center justify-end gap-0.5 sm:gap-1">
                       <span className="text-sm font-medium tabular-nums">
                         L {(effectivePrice(item) * item.qtySold).toFixed(2)}
                       </span>
@@ -556,8 +640,8 @@ export default function InvoicePage() {
             )}
 
             <button
-              onClick={handlePrint}
-              disabled={items.length === 0}
+              onClick={() => handleConfirmSale(true)}
+              disabled={confirming || items.length === 0}
               className="flex items-center justify-center gap-2 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Printer className="size-4" />
@@ -565,7 +649,7 @@ export default function InvoicePage() {
             </button>
 
             <button
-              onClick={handleConfirmSale}
+              onClick={() => handleConfirmSale(false)}
               disabled={confirming || items.length === 0}
               className={cn(
                 "flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-primary-foreground transition-all",

@@ -12,6 +12,21 @@ import { getProductImageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/language-context";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function DashboardPage() {
   const { t } = useLanguage();
@@ -42,7 +57,9 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!role) return;
     const sellerId = isAdmin ? (selectedSeller || undefined) : (userId ?? undefined);
-    getSalesTotals(sellerId)
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+    getSalesTotals(sellerId, todayStart.toISOString(), todayEnd.toISOString())
       .then(({ unitsSold, revenue }) => {
         setUnitsSold(unitsSold);
         setRevenue(revenue);
@@ -76,26 +93,20 @@ export default function DashboardPage() {
 
         {/* Admin: seller picker to scope stats */}
         {isAdmin && sellers.length > 0 && (
-          <div className="flex items-center gap-3">
-            <select
-              value={selectedSeller}
-              onChange={(e) => setSelectedSeller(e.target.value)}
-              className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring max-w-xs"
-            >
-              <option value="">All sellers</option>
+          <Select
+            value={selectedSeller || "__all__"}
+            onValueChange={(v) => setSelectedSeller(v === "__all__" ? "" : v)}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder={t.allSellers} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t.allSellers}</SelectItem>
               {sellers.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
               ))}
-            </select>
-            {selectedSeller && (
-              <button
-                onClick={() => setSelectedSeller("")}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Clear
-              </button>
-            )}
-          </div>
+            </SelectContent>
+          </Select>
         )}
 
         {/* Inventory stats */}
@@ -130,27 +141,22 @@ export default function DashboardPage() {
           ) : recent.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t.noProductsStart}</p>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground w-14" />
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.colName}</th>
-                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">{t.colPrice}</th>
-                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">
-                      {t.colDate}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recent.map((product, i) => (
-                    <tr
-                      key={product.$id}
-                      className={cn("border-t border-border", i % 2 !== 0 && "bg-muted/10")}
-                    >
-                      <td className="px-4 py-3">
+            <div className="rounded-xl border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="w-14" />
+                    <TableHead>{t.colName}</TableHead>
+                    <TableHead className="text-right">{t.colPrice}</TableHead>
+                    <TableHead>{t.colDate}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recent.map((product) => (
+                    <TableRow key={product.$id}>
+                      <TableCell>
                         {product.image_id ? (
-                          <div className="relative size-15 rounded-md overflow-hidden shrink-0">
+                          <div className="relative size-10 rounded-md overflow-hidden shrink-0">
                             <Image
                               src={getProductImageUrl(product.image_id)}
                               alt={product.name}
@@ -159,24 +165,24 @@ export default function DashboardPage() {
                             />
                           </div>
                         ) : (
-                          <div className="size-15 rounded-md bg-muted flex items-center justify-center">
+                          <div className="size-10 rounded-md bg-muted flex items-center justify-center">
                             <Package className="size-4 text-muted-foreground" />
                           </div>
                         )}
-                      </td>
-                      <td className="px-4 py-3 font-medium">{product.name}</td>
-                      <td className="px-4 py-3 text-right">L {product.price.toFixed(2)}</td>
-                      <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                      </TableCell>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell className="text-right">L {product.price.toFixed(2)}</TableCell>
+                      <TableCell className="text-muted-foreground">
                         {new Date(product.$createdAt).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
                         })}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </div>
