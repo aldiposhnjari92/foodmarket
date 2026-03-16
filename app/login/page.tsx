@@ -2,44 +2,33 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBasket, Loader2 } from "lucide-react";
-import { login, register } from "@/lib/auth";
+import { ShoppingBasket, Loader2, Eye, EyeOff } from "lucide-react";
+import { login } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
-
-type Mode = "login" | "register";
+import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
   const router = useRouter();
   const { t } = useLanguage();
-  const [mode, setMode] = useState<Mode>("login");
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      if (mode === "login") {
-        await login(email, password);
-      } else {
-        await register(email, password, name);
-      }
+      await login(email, password);
       router.replace("/dashboard");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const switchMode = (next: Mode) => {
-    setMode(next);
-    setError(null);
   };
 
   return (
@@ -50,49 +39,42 @@ export default function LoginPage() {
             <ShoppingBasket className="size-7 text-primary" />
             <span className="text-2xl font-bold">{t.appName}</span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {mode === "login" ? t.signInToAccount : t.createNewAccount}
-          </p>
+          <p className="text-sm text-muted-foreground">{t.signInToAccount}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {mode === "register" && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">{t.labelName}</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t.placeholderName}
-                required
-                className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
-              />
-            </div>
-          )}
-
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium">{t.labelEmail}</label>
-            <input
+            <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+              className="py-5"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium">{t.labelPassword}</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              minLength={8}
-              className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={1}
+                className="pr-10 py-5"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -112,25 +94,13 @@ export default function LoginPage() {
             {loading ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                {mode === "login" ? t.signingIn : t.creatingAccount}
+                {t.signingIn}
               </>
-            ) : mode === "login" ? (
-              t.signIn
             ) : (
-              t.createAccount
+              t.signIn
             )}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          {mode === "login" ? t.noAccount : t.alreadyAccount}{" "}
-          <button
-            onClick={() => switchMode(mode === "login" ? "register" : "login")}
-            className="font-medium text-primary hover:underline"
-          >
-            {mode === "login" ? t.signUp : t.signIn}
-          </button>
-        </p>
       </div>
     </div>
   );
