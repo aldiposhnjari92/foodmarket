@@ -194,7 +194,7 @@ export default function InvoicePage() {
         total: effectivePrice(i) * i.qtySold,
       }));
       try {
-        await createSale(invoiceNumber, saleItems, grandTotal, 0, grandTotal, buyerName, sellerName);
+        await createSale(invoiceNumber, saleItems, grandTotal, 0, grandTotal, buyerName, sellerName, userId ?? "");
       } catch {
         // Sales table may not be configured yet — sale still counts for inventory
       }

@@ -5,25 +5,63 @@ import { Loader2, ChevronDown, ChevronUp, BarChart3, ShoppingCart, Receipt, User
 import { AppLayout } from "@/components/app-layout";
 import { getSales, Sale, SaleItem } from "@/lib/sales";
 import { CustomerCombobox } from "@/components/customer-combobox";
+import { getAllUserRoles } from "@/lib/user-roles";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
 import { AccessDenied } from "@/components/app-layout";
 
+type DatePreset = "all" | "today" | "week" | "month" | "custom";
+
+function getPresetRange(preset: DatePreset): { from: Date | null; to: Date | null } {
+  const now = new Date();
+  if (preset === "today") {
+    const from = new Date(now); from.setHours(0, 0, 0, 0);
+    const to = new Date(now); to.setHours(23, 59, 59, 999);
+    return { from, to };
+  }
+  if (preset === "week") {
+    const from = new Date(now); from.setDate(now.getDate() - 6); from.setHours(0, 0, 0, 0);
+    const to = new Date(now); to.setHours(23, 59, 59, 999);
+    return { from, to };
+  }
+  if (preset === "month") {
+    const from = new Date(now); from.setDate(now.getDate() - 29); from.setHours(0, 0, 0, 0);
+    const to = new Date(now); to.setHours(23, 59, 59, 999);
+    return { from, to };
+  }
+  return { from: null, to: null };
+}
+
 export default function InventoryPage() {
   const { t } = useLanguage();
-  const { can, roleLoading } = useRole();
+  const { role, userId, can, roleLoading } = useRole();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [customerFilter, setCustomerFilter] = useState("");
+  const [datePreset, setDatePreset] = useState<DatePreset>("all");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [sellers, setSellers] = useState<{ id: string; name: string }[]>([]);
+  const [sellerFilter, setSellerFilter] = useState("");
+
+  const isAdmin = role === "admin";
 
   useEffect(() => {
-    getSales()
+    if (roleLoading || !role) return;
+    const sellerId = isAdmin ? undefined : (userId ?? undefined);
+    getSales(sellerId)
       .then(setSales)
       .catch(() => setSales([]))
       .finally(() => setLoading(false));
-  }, []);
+
+    if (isAdmin) {
+      getAllUserRoles()
+        .then((rows) => setSellers(rows.map((r) => ({ id: r.user_id, name: r.name || r.email }))))
+        .catch(() => {});
+    }
+  }, [role, userId, isAdmin, roleLoading]);
 
   // Unique customer names for the suggestion list
   const customerNames = useMemo(() => {
@@ -36,10 +74,39 @@ export default function InventoryPage() {
   }, [sales]);
 
   const filtered = useMemo(() => {
-    if (!customerFilter.trim()) return sales;
-    const q = customerFilter.toLowerCase();
-    return sales.filter((s) => s.buyer_name.toLowerCase().includes(q));
-  }, [sales, customerFilter]);
+    let result = sales;
+
+    // Date filter
+    if (datePreset !== "all") {
+      let from: Date | null = null;
+      let to: Date | null = null;
+      if (datePreset === "custom") {
+        from = customFrom ? new Date(customFrom + "T00:00:00") : null;
+        to = customTo ? new Date(customTo + "T23:59:59") : null;
+      } else {
+        ({ from, to } = getPresetRange(datePreset));
+      }
+      result = result.filter((s) => {
+        const d = new Date(s.$createdAt);
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+        return true;
+      });
+    }
+
+    // Seller filter (admin only)
+    if (sellerFilter) {
+      result = result.filter((s) => s.seller_id === sellerFilter);
+    }
+
+    // Customer filter
+    if (customerFilter.trim()) {
+      const q = customerFilter.toLowerCase();
+      result = result.filter((s) => s.buyer_name.toLowerCase().includes(q));
+    }
+
+    return result;
+  }, [sales, customerFilter, sellerFilter, datePreset, customFrom, customTo]);
 
   const totalRevenue = filtered.reduce((s, sale) => s + sale.grand_total, 0);
   const totalUnits = filtered.reduce((s, sale) => {
@@ -99,6 +166,75 @@ export default function InventoryPage() {
               <p className="text-2xl font-bold">L {totalRevenue.toFixed(2)}</p>
             )}
           </div>
+        </div>
+
+        {/* Seller filter — admin only */}
+        {isAdmin && sellers.length > 0 && (
+          <div className="flex items-center gap-3">
+            <select
+              value={sellerFilter}
+              onChange={(e) => setSellerFilter(e.target.value)}
+              className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring max-w-xs"
+            >
+              <option value="">All sellers</option>
+              {sellers.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+            {sellerFilter && (
+              <button
+                onClick={() => setSellerFilter("")}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Date filter */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
+            {(["all", "today", "week", "month", "custom"] as DatePreset[]).map((preset) => (
+              <button
+                key={preset}
+                onClick={() => setDatePreset(preset)}
+                className={cn(
+                  "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                  datePreset === preset
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                )}
+              >
+                {preset === "all" ? "All time" : preset === "today" ? "Today" : preset === "week" ? "Last 7 days" : preset === "month" ? "Last 30 days" : "Custom range"}
+              </button>
+            ))}
+          </div>
+          {datePreset === "custom" && (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="date"
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+              <span className="text-xs text-muted-foreground">to</span>
+              <input
+                type="date"
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+              {(customFrom || customTo) && (
+                <button
+                  onClick={() => { setCustomFrom(""); setCustomTo(""); }}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Customer filter */}

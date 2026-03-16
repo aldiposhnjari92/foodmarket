@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/app-layout";
 import { getProducts, Product } from "@/lib/products";
 import { useRole } from "@/contexts/role-context";
 import { getSalesTotals } from "@/lib/sales";
+import { getAllUserRoles } from "@/lib/user-roles";
 import { getProductImageUrl } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -19,24 +20,38 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [unitsSold, setUnitsSold] = useState<number | null>(null);
   const [revenue, setRevenue] = useState<number | null>(null);
+  const [sellers, setSellers] = useState<{ id: string; name: string }[]>([]);
+  const [selectedSeller, setSelectedSeller] = useState("");
+
+  const isAdmin = role === "admin";
 
   useEffect(() => {
-    const ownerId = role === "admin" ? undefined : userId ?? undefined;
+    if (!role) return;
+    const ownerId = isAdmin ? undefined : userId ?? undefined;
     getProducts(ownerId)
       .then((data) => setProducts(data))
       .finally(() => setLoading(false));
 
-    getSalesTotals()
+    if (isAdmin) {
+      getAllUserRoles()
+        .then((rows) => setSellers(rows.map((r) => ({ id: r.user_id, name: r.name || r.email }))))
+        .catch(() => {});
+    }
+  }, [role, userId, isAdmin]);
+
+  useEffect(() => {
+    if (!role) return;
+    const sellerId = isAdmin ? (selectedSeller || undefined) : (userId ?? undefined);
+    getSalesTotals(sellerId)
       .then(({ unitsSold, revenue }) => {
         setUnitsSold(unitsSold);
         setRevenue(revenue);
       })
       .catch(() => {
-        // Sales table not configured yet
         setUnitsSold(0);
         setRevenue(0);
       });
-  }, [role, userId]);
+  }, [role, userId, isAdmin, selectedSeller]);
 
   const totalValue = products.reduce((sum, p) => sum + p.price, 0);
   const avgPrice = products.length > 0 ? totalValue / products.length : 0;
@@ -58,6 +73,30 @@ export default function DashboardPage() {
             {t.scanProduct}
           </Link>
         </div>
+
+        {/* Admin: seller picker to scope stats */}
+        {isAdmin && sellers.length > 0 && (
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedSeller}
+              onChange={(e) => setSelectedSeller(e.target.value)}
+              className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring max-w-xs"
+            >
+              <option value="">All sellers</option>
+              {sellers.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+            {selectedSeller && (
+              <button
+                onClick={() => setSelectedSeller("")}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Inventory stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

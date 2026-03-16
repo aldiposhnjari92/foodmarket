@@ -21,6 +21,7 @@ export interface Sale {
   grand_total: number;
   buyer_name: string;
   seller_name: string;
+  seller_id: string;
 }
 
 function toSale(row: Models.DefaultRow): Sale {
@@ -34,20 +35,23 @@ function toSale(row: Models.DefaultRow): Sale {
     grand_total: row.grand_total as number,
     buyer_name: (row.buyer_name as string) || "",
     seller_name: (row.seller_name as string) || "",
+    seller_id: (row.seller_id as string) || "",
   };
 }
 
-export async function getSales(): Promise<Sale[]> {
+export async function getSales(sellerId?: string): Promise<Sale[]> {
+  const queries = [Query.orderDesc("$createdAt")];
+  if (sellerId) queries.push(Query.equal("seller_id", sellerId));
   const response = await tablesDB.listRows({
     databaseId: DATABASE_ID,
     tableId: SALES_TABLE_ID,
-    queries: [Query.orderDesc("$createdAt")],
+    queries,
   });
   return response.rows.map(toSale);
 }
 
-export async function getSalesTotals(): Promise<{ unitsSold: number; revenue: number }> {
-  const sales = await getSales();
+export async function getSalesTotals(sellerId?: string): Promise<{ unitsSold: number; revenue: number }> {
+  const sales = await getSales(sellerId);
   let unitsSold = 0;
   let revenue = 0;
   for (const sale of sales) {
@@ -69,7 +73,8 @@ export async function createSale(
   vat: number,
   grand_total: number,
   buyer_name: string = "",
-  seller_name: string = ""
+  seller_name: string = "",
+  seller_id: string = ""
 ): Promise<Sale> {
   const row = await tablesDB.createRow({
     databaseId: DATABASE_ID,
@@ -83,6 +88,7 @@ export async function createSale(
       grand_total,
       buyer_name,
       seller_name,
+      seller_id,
     },
   });
   return toSale(row);
