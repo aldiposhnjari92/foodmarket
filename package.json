@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "appwrite": "^23.0.0",

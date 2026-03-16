@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { LanguageProvider } from "@/contexts/language-context";
 import { RoleProvider } from "@/contexts/role-context";
 
+import { Analytics } from "@vercel/analytics/next"
+
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 const geistSans = Geist({
@@ -32,6 +34,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Analytics/>
         <LanguageProvider>
           <RoleProvider>{children}</RoleProvider>
         </LanguageProvider>
