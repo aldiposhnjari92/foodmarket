@@ -570,9 +570,20 @@ export default function InvoicePage() {
                           value={getQtyDisplay(item)}
                           min="1"
                           max={item.isManual ? undefined : item.product.quantity}
-                          onChange={(e) =>
-                            setRawQtys((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setRawQtys((prev) => ({ ...prev, [item.product.$id]: val }));
+                            const n = parseInt(val, 10);
+                            if (!isNaN(n) && n > 0) {
+                              setItems((prev) =>
+                                prev.map((i) => {
+                                  if (i.product.$id !== item.product.$id) return i;
+                                  const max = i.isManual ? Infinity : i.product.quantity;
+                                  return { ...i, qtySold: Math.min(n, max) };
+                                })
+                              );
+                            }
+                          }}
                           onBlur={() => commitQty(item.product.$id)}
                           className="w-14 text-center tabular-nums"
                         />
@@ -596,9 +607,20 @@ export default function InvoicePage() {
                           value={getPriceDisplay(item)}
                           min="0"
                           step="0.01"
-                          onChange={(e) =>
-                            setRawPrices((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setRawPrices((prev) => ({ ...prev, [item.product.$id]: val }));
+                            const n = parseFloat(val);
+                            if (!isNaN(n) && val !== "") {
+                              setItems((prev) =>
+                                prev.map((i) =>
+                                  i.product.$id === item.product.$id
+                                    ? { ...i, customPrice: n }
+                                    : i
+                                )
+                              );
+                            }
+                          }}
                           onBlur={() => commitPrice(item.product.$id)}
                           className="w-full text-right tabular-nums"
                         />
