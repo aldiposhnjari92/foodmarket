@@ -110,7 +110,7 @@ export default function DashboardPage() {
         )}
 
         {/* Inventory stats */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <StatCard icon={Package} label={t.totalProducts} value={loading ? null : products.length.toString()} />
           <StatCard icon={DollarSign} label={t.totalValue} value={loading ? null : `L ${totalValue.toFixed(2)}`} />
           <StatCard icon={TrendingUp} label={t.avgPrice} value={loading ? null : `L ${avgPrice.toFixed(2)}`} />
