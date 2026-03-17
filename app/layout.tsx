@@ -19,6 +19,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Food Market",
   description: "Scan and manage your food inventory",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  authors: [{ name: "Aldi Psohnjari", url: "https://foodmarket-kl3a.vercel.app" }],
+  icons: {
+  icon: [
+    { url: "/logo.svg", type: "image/svg+xml", sizes: "32x32" },
+  ]
+}
 };
 
 export default function RootLayout({

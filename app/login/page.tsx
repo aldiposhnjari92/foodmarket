@@ -7,6 +7,7 @@ import { login } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { Input } from "@/components/ui/input";
+import Logo from "@/components/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,8 +37,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-2 text-center">
           <div className="flex items-center gap-2">
-            <ShoppingBasket className="size-7 text-primary" />
-            <span className="text-2xl font-bold">{t.appName}</span>
+            <Logo size={48} />
           </div>
           <p className="text-sm text-muted-foreground">{t.signInToAccount}</p>
         </div>
