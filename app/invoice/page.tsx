@@ -559,7 +559,7 @@ export default function InvoicePage() {
                             setRawQtys((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
                           }
                           onBlur={() => commitQty(item.product.$id)}
-                          className="w-10 text-center tabular-nums"
+                          className="w-14 text-center tabular-nums"
                         />
                         <button
                           onClick={() => updateQty(item.product.$id, 1)}
