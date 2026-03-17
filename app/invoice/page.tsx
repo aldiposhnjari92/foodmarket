@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Loader2,
   Plus,
@@ -19,6 +19,14 @@ import { getCustomers, Customer } from "@/lib/customers";
 import { getCurrentUser } from "@/lib/auth";
 import { CustomerCombobox } from "@/components/customer-combobox";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableHeader,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
@@ -497,119 +505,117 @@ export default function InvoicePage() {
               </div>
             )}
 
-            {/* Unified grid: header + all rows share the same column track sizes */}
-            <div className="overflow-x-auto -mx-1 px-1">
-            <div className="grid grid-cols-[1fr_7rem_6rem_6rem] gap-x-2 sm:gap-x-3 min-w-85">
-              {/* Header row */}
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2">
-                {t.colName}
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 text-center">
-                {t.quantityLabel}
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 text-right">
-                {t.unitPrice}
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 text-right">
-                {t.total}
-              </span>
-
-              {/* Empty state */}
-              {items.length === 0 && (
-                <div className="col-span-4 py-10 text-center print:hidden">
-                  <Package className="size-8 mx-auto opacity-20 mb-2" />
-                  <p className="text-sm text-muted-foreground">{t.emptyInvoice}</p>
-                </div>
-              )}
-
-              {/* Line items — each item contributes 4 direct grid children */}
-              {items.map((item) => (
-                <React.Fragment key={item.product.$id}>
-                  {/* Name */}
-                  <div className="min-w-0 self-center py-2.5 border-t border-border/60">
-                    <span className="text-sm font-medium truncate block">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-0">
+                    {t.colName}
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center w-28">
+                    {t.quantityLabel}
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right w-24">
+                    {t.unitPrice}
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right w-24 pr-0">
+                    {t.total}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.length === 0 && (
+                  <TableRow className="hover:bg-transparent print:hidden">
+                    <TableCell colSpan={4} className="py-10 text-center pl-0 pr-0">
+                      <Package className="size-8 mx-auto opacity-20 mb-2" />
+                      <p className="text-sm text-muted-foreground">{t.emptyInvoice}</p>
+                    </TableCell>
+                  </TableRow>
+                )}
+                {items.map((item) => (
+                  <TableRow key={item.product.$id} className="hover:bg-transparent">
+                    {/* Name */}
+                    <TableCell className="pl-0 font-medium whitespace-normal">
                       {item.product.name}
-                    </span>
-                    {item.isManual && (
-                      <span className="text-xs text-primary font-medium">{t.manualBadge}</span>
-                    )}
-                  </div>
-
-                  {/* Qty */}
-                  <div className="self-center py-2.5 border-t border-border/60">
-                    <div className="flex items-center justify-center gap-0.5 print:hidden">
-                      <button
-                        onClick={() => updateQty(item.product.$id, -1)}
-                        className="rounded p-0.5 hover:bg-muted transition-colors shrink-0"
-                      >
-                        <Minus className="size-3" />
-                      </button>
-                      <Input
-                        type="number"
-                        value={getQtyDisplay(item)}
-                        min="1"
-                        max={item.isManual ? undefined : item.product.quantity}
-                        onChange={(e) =>
-                          setRawQtys((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
-                        }
-                        onBlur={() => commitQty(item.product.$id)}
-                        className="w-10 text-center tabular-nums"
-                      />
-                      <button
-                        onClick={() => updateQty(item.product.$id, 1)}
-                        className="rounded p-0.5 hover:bg-muted transition-colors shrink-0"
-                      >
-                        <Plus className="size-3" />
-                      </button>
-                    </div>
-                    <span className="hidden print:block text-sm text-center tabular-nums">
-                      {item.qtySold}
-                    </span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="self-center py-2.5 border-t border-border/60">
-                    <div className="flex flex-col items-end print:hidden">
-                      <Input
-                        type="number"
-                        value={getPriceDisplay(item)}
-                        min="0"
-                        step="0.01"
-                        onChange={(e) =>
-                          setRawPrices((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
-                        }
-                        onBlur={() => commitPrice(item.product.$id)}
-                        className="w-full text-right tabular-nums"
-                      />
-                      {item.customPrice !== undefined && (
-                        <span className="text-xs text-muted-foreground line-through">
-                          L {item.product.price.toFixed(2)}
-                        </span>
+                      {item.isManual && (
+                        <span className="block text-xs text-primary font-medium">{t.manualBadge}</span>
                       )}
-                    </div>
-                    <span className="hidden print:block text-sm text-right tabular-nums">
-                      L {effectivePrice(item).toFixed(2)}
-                    </span>
-                  </div>
+                    </TableCell>
 
-                  {/* Total + remove */}
-                  <div className="self-center py-2.5 border-t border-border/60">
-                    <div className="flex items-center justify-end gap-0.5">
-                      <span className="text-sm font-medium tabular-nums">
-                        L {(effectivePrice(item) * item.qtySold).toFixed(2)}
+                    {/* Qty */}
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-0.5 print:hidden">
+                        <button
+                          onClick={() => updateQty(item.product.$id, -1)}
+                          className="rounded p-0.5 hover:bg-muted transition-colors shrink-0"
+                        >
+                          <Minus className="size-3" />
+                        </button>
+                        <Input
+                          type="number"
+                          value={getQtyDisplay(item)}
+                          min="1"
+                          max={item.isManual ? undefined : item.product.quantity}
+                          onChange={(e) =>
+                            setRawQtys((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
+                          }
+                          onBlur={() => commitQty(item.product.$id)}
+                          className="w-10 text-center tabular-nums"
+                        />
+                        <button
+                          onClick={() => updateQty(item.product.$id, 1)}
+                          className="rounded p-0.5 hover:bg-muted transition-colors shrink-0"
+                        >
+                          <Plus className="size-3" />
+                        </button>
+                      </div>
+                      <span className="hidden print:block text-sm tabular-nums">
+                        {item.qtySold}
                       </span>
-                      <button
-                        onClick={() => removeItem(item.product.$id)}
-                        className="print:hidden rounded p-0.5 hover:bg-destructive/10 hover:text-destructive transition-colors ml-0.5 shrink-0"
-                      >
-                        <Trash2 className="size-3" />
-                      </button>
-                    </div>
-                  </div>
-                </React.Fragment>
-              ))}
-            </div>
-            </div>
+                    </TableCell>
+
+                    {/* Price */}
+                    <TableCell className="text-right">
+                      <div className="flex flex-col items-end print:hidden">
+                        <Input
+                          type="number"
+                          value={getPriceDisplay(item)}
+                          min="0"
+                          step="0.01"
+                          onChange={(e) =>
+                            setRawPrices((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
+                          }
+                          onBlur={() => commitPrice(item.product.$id)}
+                          className="w-full text-right tabular-nums"
+                        />
+                        {item.customPrice !== undefined && (
+                          <span className="text-xs text-muted-foreground line-through">
+                            L {item.product.price.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                      <span className="hidden print:block text-sm tabular-nums">
+                        L {effectivePrice(item).toFixed(2)}
+                      </span>
+                    </TableCell>
+
+                    {/* Total + remove */}
+                    <TableCell className="text-right pr-0">
+                      <div className="flex items-center justify-end gap-0.5">
+                        <span className="text-sm font-medium tabular-nums">
+                          L {(effectivePrice(item) * item.qtySold).toFixed(2)}
+                        </span>
+                        <button
+                          onClick={() => removeItem(item.product.$id)}
+                          className="print:hidden rounded p-0.5 hover:bg-destructive/10 hover:text-destructive transition-colors ml-0.5 shrink-0"
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
 
             {/* Totals */}
             <div className="mt-4 pt-3 border-t border-border">
