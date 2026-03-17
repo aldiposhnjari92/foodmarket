@@ -90,6 +90,7 @@ const en = {
   cancel: "Cancel",
   delete: "Delete",
   remove: "Remove",
+  outOfStock: "Out of stock",
   // Products list
   colStock: "Stock",
   quantity: "Quantity",
@@ -215,6 +216,17 @@ const en = {
   addingStock: "Adding…",
   stockAdded: "Stock updated!",
   newStockTotal: (n: number) => `New total: ${n}`,
+  // Package
+  productType: "Product Type",
+  singleUnit: "Single Unit",
+  packageType: "Package",
+  piecesPerPackage: "Pieces per Package",
+  piecesPerPackagePlaceholder: "e.g. 30",
+  packageCost: "Package cost",
+  packageBadge: "Pkg",
+  packagesToAdd: "Add number of packages",
+  piecesLabel: (n: number) => `${n} pcs`,
+  packageDetail: (pieces: number) => `${pieces} pcs/pkg`,
 };
 
 const sq: typeof en = {
@@ -307,6 +319,7 @@ const sq: typeof en = {
   cancel: "Anulo",
   delete: "Fshi",
   remove: "Hiq",
+  outOfStock: "Pa stok",
   // Products list
   colStock: "Gjendje",
   quantity: "Sasia",
@@ -432,6 +445,17 @@ const sq: typeof en = {
   addingStock: "Duke shtuar…",
   stockAdded: "Stoku u përditësua!",
   newStockTotal: (n: number) => `Totali i ri: ${n}`,
+  // Package
+  productType: "Lloji i Produktit",
+  singleUnit: "Njësi",
+  packageType: "Paketë",
+  piecesPerPackage: "Copë për Paketë",
+  piecesPerPackagePlaceholder: "p.sh. 30",
+  packageCost: "Kostoja e paketës",
+  packageBadge: "Pak",
+  packagesToAdd: "Numri i Pakove për të shtuar",
+  piecesLabel: (n: number) => `${n} copë`,
+  packageDetail: (pieces: number) => `${pieces} copë/paketë`,
 };
 
 export const translations: Record<Locale, typeof en> = { en, sq };

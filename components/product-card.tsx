@@ -29,7 +29,8 @@ export function ProductCard({ product, onDelete, deleting, priority = false }: P
     <div
       className={cn(
         "group relative flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm transition-all",
-        deleting && "opacity-50 pointer-events-none"
+        deleting && "opacity-50 pointer-events-none",
+        product.quantity === 0 && "opacity-60"
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -49,9 +50,16 @@ export function ProductCard({ product, onDelete, deleting, priority = false }: P
             <p className="text-xs text-muted-foreground mt-0.5">{date}</p>
           </div>
         </div>
-        <span className="shrink-0 rounded-lg bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">
-          L {product.price.toFixed(2)}
-        </span>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <span className="rounded-lg bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">
+            L {product.price.toFixed(2)}
+          </span>
+          {product.quantity === 0 && (
+            <span className="rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+              {t.outOfStock}
+            </span>
+          )}
+        </div>
       </div>
 
       {confirming ? (

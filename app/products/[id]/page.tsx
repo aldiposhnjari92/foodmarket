@@ -35,6 +35,7 @@ export default function ProductDetailPage() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [qty, setQty] = useState("");
+  const [piecesPerPkg, setPiecesPerPkg] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -53,6 +54,7 @@ export default function ProductDetailPage() {
         setName(p.name);
         setPrice(p.price.toString());
         setQty(p.quantity.toString());
+        setPiecesPerPkg(p.pieces_per_package?.toString() ?? "");
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
@@ -62,7 +64,8 @@ export default function ProductDetailPage() {
     product !== null &&
     (name !== product.name ||
       price !== product.price.toString() ||
-      qty !== product.quantity.toString());
+      qty !== product.quantity.toString() ||
+      piecesPerPkg !== (product.pieces_per_package?.toString() ?? ""));
 
   const handleSave = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -88,7 +91,16 @@ export default function ProductDetailPage() {
 
     setSaving(true);
     try {
-      const updated = await updateProduct(id, name.trim(), parsedPrice, undefined, parsedQty);
+      const parsedPieces = piecesPerPkg ? parseInt(piecesPerPkg, 10) : undefined;
+      const updated = await updateProduct(
+        id,
+        name.trim(),
+        parsedPrice,
+        undefined,
+        parsedQty,
+        product!.is_package,
+        parsedPieces
+      );
       setProduct(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -104,13 +116,16 @@ export default function ProductDetailPage() {
     const n = parseInt(addQty, 10);
     if (isNaN(n) || n < 1) return;
     setAddingStock(true);
+    const piecesToAdd = product.is_package && product.pieces_per_package
+      ? n * product.pieces_per_package
+      : n;
     try {
       const updated = await updateProduct(
         id,
         product.name,
         product.price,
         product.image_id,
-        product.quantity + n
+        product.quantity + piecesToAdd
       );
       setProduct(updated);
       setQty(updated.quantity.toString());
@@ -196,18 +211,39 @@ export default function ProductDetailPage() {
 
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-2xl border border-border bg-card p-4">
-                <p className="text-xs text-muted-foreground mb-1">{t.currentPrice}</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  {t.currentPrice}{product!.is_package ? " / pc" : ""}
+                </p>
                 <p className="text-2xl font-bold">L {product!.price.toFixed(2)}</p>
+                {product!.is_package && product!.pieces_per_package && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t.packageCost}: L {(product!.price * product!.pieces_per_package).toFixed(2)}
+                  </p>
+                )}
               </div>
               <div className="rounded-2xl border border-border bg-card p-4">
                 <p className="text-xs text-muted-foreground mb-1">{t.colStock}</p>
                 <p className="text-2xl font-bold">{product!.quantity}</p>
+                {product!.is_package && product!.pieces_per_package && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {Math.floor(product!.quantity / product!.pieces_per_package)} {t.packageType.toLowerCase()}s
+                  </p>
+                )}
               </div>
               <div className="rounded-2xl border border-border bg-card p-4">
-                <p className="text-xs text-muted-foreground mb-1">{t.productId}</p>
-                <p className="text-xs font-mono text-muted-foreground break-all mt-1">
-                  {product!.$id}
-                </p>
+                {product!.is_package && product!.pieces_per_package ? (
+                  <>
+                    <p className="text-xs text-muted-foreground mb-1">{t.piecesPerPackage}</p>
+                    <p className="text-2xl font-bold">{product!.pieces_per_package}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground mb-1">{t.productId}</p>
+                    <p className="text-xs font-mono text-muted-foreground break-all mt-1">
+                      {product!.$id}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
@@ -260,6 +296,23 @@ export default function ProductDetailPage() {
                 />
               </div>
 
+              {product!.is_package && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium">{t.piecesPerPackage}</label>
+                  <input
+                    type="number"
+                    value={piecesPerPkg}
+                    onChange={(e) => {
+                      setPiecesPerPkg(e.target.value);
+                      setSaved(false);
+                    }}
+                    step="1"
+                    min="1"
+                    className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                  />
+                </div>
+              )}
+
               {saveError && (
                 <p className="rounded-lg bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
                   {saveError}
@@ -301,7 +354,9 @@ export default function ProductDetailPage() {
 
               <div className="flex items-end gap-3">
                 <div className="flex flex-col gap-1.5 flex-1">
-                  <label className="text-sm font-medium">{t.addUnits}</label>
+                  <label className="text-sm font-medium">
+                    {product!.is_package ? t.packagesToAdd : t.addUnits}
+                  </label>
                   <input
                     type="number"
                     value={addQty}
@@ -314,7 +369,9 @@ export default function ProductDetailPage() {
                 </div>
                 {addQty && parseInt(addQty) > 0 && product && (
                   <p className="text-sm text-muted-foreground pb-2.5 shrink-0">
-                    {t.newStockTotal(product.quantity + parseInt(addQty))}
+                    {product.is_package && product.pieces_per_package
+                      ? t.newStockTotal(product.quantity + parseInt(addQty) * product.pieces_per_package)
+                      : t.newStockTotal(product.quantity + parseInt(addQty))}
                   </p>
                 )}
               </div>

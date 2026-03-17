@@ -6,10 +6,12 @@ export interface Product {
   $id: string;
   $createdAt: string;
   name: string;
-  price: number;
-  quantity: number;
+  price: number;           // price per piece/unit
+  quantity: number;        // total pieces in stock
   image_id?: string;
   owner_id?: string;
+  is_package?: boolean;
+  pieces_per_package?: number;
 }
 
 function toProduct(row: Models.DefaultRow): Product {
@@ -21,6 +23,8 @@ function toProduct(row: Models.DefaultRow): Product {
     quantity: (row.quantity as number) ?? 0,
     image_id: (row.image_id as string) || undefined,
     owner_id: (row.owner_id as string) || undefined,
+    is_package: (row.is_package as boolean) || false,
+    pieces_per_package: (row.pieces_per_package as number) || undefined,
   };
 }
 
@@ -49,11 +53,15 @@ export async function createProduct(
   price: number,
   imageId?: string,
   quantity: number = 1,
-  ownerId?: string
+  ownerId?: string,
+  isPackage: boolean = false,
+  piecesPerPackage?: number
 ): Promise<Product> {
   const data: Record<string, unknown> = { name, price, quantity };
   if (imageId) data.image_id = imageId;
   if (ownerId) data.owner_id = ownerId;
+  if (isPackage) { data.is_package = true; }
+  if (piecesPerPackage) data.pieces_per_package = piecesPerPackage;
 
   const row = await tablesDB.createRow({
     databaseId: DATABASE_ID,
@@ -69,11 +77,15 @@ export async function updateProduct(
   name: string,
   price: number,
   imageId?: string,
-  quantity?: number
+  quantity?: number,
+  isPackage?: boolean,
+  piecesPerPackage?: number
 ): Promise<Product> {
   const data: Record<string, unknown> = { name, price };
   if (imageId !== undefined) data.image_id = imageId || null;
   if (quantity !== undefined) data.quantity = quantity;
+  if (isPackage !== undefined) data.is_package = isPackage;
+  if (piecesPerPackage !== undefined) data.pieces_per_package = piecesPerPackage || null;
 
   const row = await tablesDB.updateRow({
     databaseId: DATABASE_ID,
@@ -95,16 +107,13 @@ export async function deleteProduct(id: string, imageId?: string): Promise<void>
   }
 }
 
-/** Deduct sold quantities from inventory. Deletes the product (and its image) if quantity reaches 0. */
+/** Deduct sold quantities from inventory. Sets quantity to 0 when stock runs out (never deletes). */
 export async function sellProducts(
   items: { id: string; qtySold: number; currentQty: number; imageId?: string }[]
 ): Promise<void> {
   await Promise.all(
-    items.map(({ id, qtySold, currentQty, imageId }) => {
-      const remaining = currentQty - qtySold;
-      if (remaining <= 0) {
-        return deleteProduct(id, imageId);
-      }
+    items.map(({ id, qtySold, currentQty }) => {
+      const remaining = Math.max(0, currentQty - qtySold);
       return tablesDB.updateRow({
         databaseId: DATABASE_ID,
         tableId: TABLE_ID,

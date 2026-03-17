@@ -51,10 +51,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     getCurrentUser().then((u) => {
       if (!u) {
         router.replace("/login");
+        setLoading(false);
       } else {
         setUser(u);
         setLoading(false);
       }
+    }).catch(() => {
+      router.replace("/login");
     });
   }, [router]);
 

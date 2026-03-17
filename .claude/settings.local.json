@@ -3,7 +3,12 @@
     "allow": [
       "Bash(npx shadcn@latest add table input badge select --yes)",
       "Bash(npx shadcn@latest add popover command calendar --yes)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx shadcn@latest add tabs --yes)",
+      "Bash(npm run:*)",
+      "Bash(node -e \"require\\(''''./lib/i18n.ts''''\\)\")",
+      "Bash(npx ts-node:*)",
+      "Bash(node -e \"const {execSync} = require\\(''''child_process''''\\); console.log\\(execSync\\(''''npx next build 2>&1'''', {encoding:''''utf8''''}\\).slice\\(-500\\)\\)\")"
     ]
   }
 }

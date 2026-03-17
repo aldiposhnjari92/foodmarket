@@ -34,6 +34,8 @@ function ScanContent() {
   const [productName, setProductName] = useState("");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [productType, setProductType] = useState<"single" | "package">("single");
+  const [piecesPerPkg, setPiecesPerPkg] = useState("");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   const [lookingUp, setLookingUp] = useState(false);
@@ -46,6 +48,8 @@ function ScanContent() {
     setProductName("");
     setPrice("");
     setQuantity("1");
+    setProductType("single");
+    setPiecesPerPkg("");
     setCapturedImage(null);
     setError(null);
   };
@@ -70,15 +74,25 @@ function ScanContent() {
     setStep("confirm");
   };
 
+  const isPackage = productType === "package";
+  const parsedPieces = parseInt(piecesPerPkg, 10);
+  const parsedPriceNum = parseFloat(price);
+  const parsedQtyNum = parseInt(quantity, 10);
+  const packageCost = isPackage && !isNaN(parsedPieces) && !isNaN(parsedPriceNum)
+    ? parsedPieces * parsedPriceNum
+    : null;
+
   const handleSave = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
-    const parsedPrice = parseFloat(price);
-    const parsedQty = parseInt(quantity, 10);
     if (!productName.trim()) { setError(t.errNameRequired); return; }
-    if (isNaN(parsedPrice) || parsedPrice < 0) { setError(t.errValidPrice); return; }
-    if (isNaN(parsedQty) || parsedQty < 1) { setError(t.errValidPrice); return; }
+    if (isNaN(parsedPriceNum) || parsedPriceNum < 0) { setError(t.errValidPrice); return; }
+    if (isNaN(parsedQtyNum) || parsedQtyNum < 1) { setError(t.errValidPrice); return; }
+    if (isPackage && (isNaN(parsedPieces) || parsedPieces < 1)) { setError(t.errValidPrice); return; }
+
+    // For packages: quantity stored = number of packages × pieces per package
+    const totalQty = isPackage ? parsedQtyNum * parsedPieces : parsedQtyNum;
 
     setSaving(true);
     try {
@@ -86,7 +100,15 @@ function ScanContent() {
       if (capturedImage) {
         imageId = await uploadProductImage(capturedImage);
       }
-      await createProduct(productName.trim(), parsedPrice, imageId, parsedQty, userId ?? undefined);
+      await createProduct(
+        productName.trim(),
+        parsedPriceNum,
+        imageId,
+        totalQty,
+        userId ?? undefined,
+        isPackage,
+        isPackage ? parsedPieces : undefined
+      );
       router.push("/products");
     } catch {
       setError(t.errSaveFailed);
@@ -164,8 +186,32 @@ function ScanContent() {
               />
             </div>
 
+            {/* Product type toggle */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">{t.priceLabel}</label>
+              <label className="text-sm font-medium">{t.productType}</label>
+              <div className="flex overflow-hidden rounded-xl border border-border">
+                {(["single", "package"] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => { setProductType(type); setPiecesPerPkg(""); }}
+                    className={cn(
+                      "flex flex-1 items-center justify-center py-2.5 text-sm font-medium transition-colors",
+                      productType === type
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    {type === "single" ? t.singleUnit : t.packageType}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium">
+                {isPackage ? t.priceLabel + " / " + t.singleUnit.toLowerCase() : t.priceLabel}
+              </label>
               <input
                 type="number"
                 value={price}
@@ -178,8 +224,31 @@ function ScanContent() {
               />
             </div>
 
+            {isPackage && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">{t.piecesPerPackage}</label>
+                <input
+                  type="number"
+                  value={piecesPerPkg}
+                  onChange={(e) => setPiecesPerPkg(e.target.value)}
+                  placeholder={t.piecesPerPackagePlaceholder}
+                  step="1"
+                  min="1"
+                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                  required
+                />
+                {packageCost !== null && (
+                  <p className="text-sm text-muted-foreground">
+                    {t.packageCost}: <span className="font-semibold text-foreground">L {packageCost.toFixed(2)}</span>
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">{t.quantity}</label>
+              <label className="text-sm font-medium">
+                {isPackage ? t.packageType + "s" : t.quantity}
+              </label>
               <input
                 type="number"
                 value={quantity}
@@ -190,6 +259,11 @@ function ScanContent() {
                 className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                 required
               />
+              {isPackage && packageCost !== null && parsedQtyNum > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {parsedQtyNum * parsedPieces} {t.piecesLabel(parsedQtyNum * parsedPieces).split(" ")[1]} · L {(parsedQtyNum * packageCost).toFixed(2)} total
+                </p>
+              )}
             </div>
 
             {error && (

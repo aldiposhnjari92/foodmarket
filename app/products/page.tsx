@@ -64,7 +64,7 @@ export default function ProductsPage() {
           {can("products_add") && (
             <div className="flex items-center gap-2">
               <Button variant="outline" asChild>
-                <Link href="/scan?manual=true">
+                <Link href="/add-manual-order">
                   <PlusCircle />
                   {t.addManually}
                 </Link>
@@ -140,14 +140,26 @@ export default function ProductsPage() {
                       )}
                     </TableCell>
                     <TableCell className="font-medium">
-                      <Link
-                        href={`/products/${product.$id}`}
-                        className="hover:text-primary hover:underline transition-colors"
-                      >
-                        {product.name}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/products/${product.$id}`}
+                          className="hover:text-primary hover:underline transition-colors"
+                        >
+                          {product.name}
+                        </Link>
+                        {product.is_package && (
+                          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide shrink-0">
+                            {t.packageBadge}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-right">L {product.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      L {product.price.toFixed(2)}
+                      {product.is_package && (
+                        <span className="block text-xs text-muted-foreground">/pc</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">{product.quantity}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(product.$createdAt).toLocaleDateString(undefined, {
