@@ -279,7 +279,7 @@ export default function InventoryPage() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={customFrom} onSelect={(d) => { setCustomFrom(d); setOpenFromPicker(false); }} />
+                  <Calendar mode="single" selected={customFrom} onSelect={(d) => { setCustomFrom(d); setOpenFromPicker(false); }} disabled={customTo ? { after: customTo } : undefined} />
                 </PopoverContent>
               </Popover>
               <span className="text-xs text-muted-foreground">{t.dateRangeTo}</span>
@@ -295,7 +295,7 @@ export default function InventoryPage() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={customTo} onSelect={(d) => { setCustomTo(d); setOpenToPicker(false); }} />
+                  <Calendar mode="single" selected={customTo} onSelect={(d) => { setCustomTo(d); setOpenToPicker(false); }} disabled={customFrom ? { before: customFrom } : undefined} />
                 </PopoverContent>
               </Popover>
               {(customFrom || customTo) && (
