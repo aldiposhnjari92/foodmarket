@@ -226,8 +226,14 @@ export default function InvoicePage() {
     setRawPrices((prev) => { const n = { ...prev }; delete n[id]; return n; });
   };
 
-  const effectivePrice = (item: InvoiceItem) =>
-    item.customPrice !== undefined ? item.customPrice : item.product.price;
+  const effectivePrice = (item: InvoiceItem) => {
+    const raw = rawPrices[item.product.$id];
+    if (raw !== undefined) {
+      const n = parseFloat(raw);
+      if (!isNaN(n)) return n;
+    }
+    return item.customPrice !== undefined ? item.customPrice : item.product.price;
+  };
 
   const grandTotal = items.reduce((sum, i) => sum + effectivePrice(i) * i.qtySold, 0);
 
