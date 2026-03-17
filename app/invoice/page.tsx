@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Loader2,
   Plus,
@@ -497,38 +497,45 @@ export default function InvoicePage() {
               </div>
             )}
 
-            {/* Column headers */}
-            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 sm:gap-x-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 mb-1">
-              <span>{t.colName}</span>
-              <span className="text-right">{t.quantityLabel}</span>
-              <span className="text-right">{t.unitPrice}</span>
-              <span className="text-right">{t.total}</span>
-            </div>
+            {/* Unified grid: header + all rows share the same column track sizes */}
+            <div className="grid grid-cols-[minmax(80px,1fr)_auto_auto_auto] gap-x-2 sm:gap-x-4">
+              {/* Header row */}
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2">
+                {t.colName}
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 text-right">
+                {t.quantityLabel}
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 text-right">
+                {t.unitPrice}
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 text-right">
+                {t.total}
+              </span>
 
-            {/* Line items */}
-            {items.length === 0 ? (
-              <div className="py-10 text-center print:hidden">
-                <Package className="size-8 mx-auto opacity-20 mb-2" />
-                <p className="text-sm text-muted-foreground">{t.emptyInvoice}</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border/60">
-                {items.map((item) => (
-                  <div
-                    key={item.product.$id}
-                    className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 sm:gap-x-4 items-center py-2.5"
-                  >
-                    {/* Name + optional manual badge */}
-                    <div className="min-w-0">
-                      <span className="text-sm font-medium truncate block pr-1">
-                        {item.product.name}
-                      </span>
-                      {item.isManual && (
-                        <span className="text-xs text-primary font-medium">{t.manualBadge}</span>
-                      )}
-                    </div>
+              {/* Empty state */}
+              {items.length === 0 && (
+                <div className="col-span-4 py-10 text-center print:hidden">
+                  <Package className="size-8 mx-auto opacity-20 mb-2" />
+                  <p className="text-sm text-muted-foreground">{t.emptyInvoice}</p>
+                </div>
+              )}
 
-                    {/* Qty controls — screen only */}
+              {/* Line items — each item contributes 4 direct grid children */}
+              {items.map((item) => (
+                <React.Fragment key={item.product.$id}>
+                  {/* Name */}
+                  <div className="min-w-0 self-center py-2.5 border-t border-border/60">
+                    <span className="text-sm font-medium truncate block">
+                      {item.product.name}
+                    </span>
+                    {item.isManual && (
+                      <span className="text-xs text-primary font-medium">{t.manualBadge}</span>
+                    )}
+                  </div>
+
+                  {/* Qty */}
+                  <div className="self-center py-2.5 border-t border-border/60">
                     <div className="flex items-center gap-0.5 sm:gap-1 print:hidden">
                       <button
                         onClick={() => updateQty(item.product.$id, -1)}
@@ -545,7 +552,7 @@ export default function InvoicePage() {
                           setRawQtys((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
                         }
                         onBlur={() => commitQty(item.product.$id)}
-                        className="w-16 text-center tabular-nums"
+                        className="w-12 sm:w-16 text-center tabular-nums"
                       />
                       <button
                         onClick={() => updateQty(item.product.$id, 1)}
@@ -554,12 +561,13 @@ export default function InvoicePage() {
                         <Plus className="size-3" />
                       </button>
                     </div>
-                    {/* Qty — print only */}
                     <span className="hidden print:block text-sm text-right tabular-nums">
                       {item.qtySold}
                     </span>
+                  </div>
 
-                    {/* Editable price — screen only */}
+                  {/* Price */}
+                  <div className="self-center py-2.5 border-t border-border/60">
                     <div className="flex flex-col items-end print:hidden">
                       <Input
                         type="number"
@@ -570,7 +578,7 @@ export default function InvoicePage() {
                           setRawPrices((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
                         }
                         onBlur={() => commitPrice(item.product.$id)}
-                        className="w-24 text-right tabular-nums"
+                        className="w-20 sm:w-24 text-right tabular-nums"
                       />
                       {item.customPrice !== undefined && (
                         <span className="text-xs text-muted-foreground line-through">
@@ -578,11 +586,13 @@ export default function InvoicePage() {
                         </span>
                       )}
                     </div>
-                    {/* Price — print only */}
                     <span className="hidden print:block text-sm text-right tabular-nums">
                       L {effectivePrice(item).toFixed(2)}
                     </span>
+                  </div>
 
+                  {/* Total + remove */}
+                  <div className="self-center py-2.5 border-t border-border/60">
                     <div className="flex items-center justify-end gap-0.5 sm:gap-1">
                       <span className="text-sm font-medium tabular-nums">
                         L {(effectivePrice(item) * item.qtySold).toFixed(2)}
@@ -595,9 +605,9 @@ export default function InvoicePage() {
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                </React.Fragment>
+              ))}
+            </div>
 
             {/* Totals */}
             <div className="mt-4 pt-3 border-t border-border">

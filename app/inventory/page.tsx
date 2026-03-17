@@ -82,6 +82,8 @@ export default function InventoryPage() {
   const [sellers, setSellers] = useState<{ id: string; name: string }[]>([]);
   const [sellerFilter, setSellerFilter] = useState("");
   const [openSellerCombo, setOpenSellerCombo] = useState(false);
+  const [openFromPicker, setOpenFromPicker] = useState(false);
+  const [openToPicker, setOpenToPicker] = useState(false);
 
   const isAdmin = role === "admin";
 
@@ -265,7 +267,7 @@ export default function InventoryPage() {
           {/* Custom date range */}
           {datePreset === "custom" && (
             <div className="flex flex-wrap items-center gap-2">
-              <Popover>
+              <Popover open={openFromPicker} onOpenChange={setOpenFromPicker}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -277,11 +279,11 @@ export default function InventoryPage() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} />
+                  <Calendar mode="single" selected={customFrom} onSelect={(d) => { setCustomFrom(d); setOpenFromPicker(false); }} />
                 </PopoverContent>
               </Popover>
               <span className="text-xs text-muted-foreground">{t.dateRangeTo}</span>
-              <Popover>
+              <Popover open={openToPicker} onOpenChange={setOpenToPicker}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -293,7 +295,7 @@ export default function InventoryPage() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={customTo} onSelect={setCustomTo} />
+                  <Calendar mode="single" selected={customTo} onSelect={(d) => { setCustomTo(d); setOpenToPicker(false); }} />
                 </PopoverContent>
               </Popover>
               {(customFrom || customTo) && (
