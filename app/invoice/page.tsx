@@ -393,8 +393,20 @@ export default function InvoicePage() {
                             max={product.quantity}
                             value={getPendingQtyRaw(product.$id)}
                             onClick={(e) => e.stopPropagation()}
-                            onChange={(e) =>
-                              setPendingQtys((prev) => ({ ...prev, [product.$id]: e.target.value }))
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setPendingQtys((prev) => ({ ...prev, [product.$id]: val }));
+                              const n = parseInt(val, 10);
+                              if (inCart && !isNaN(n) && n > 0) {
+                                setItems((prev) =>
+                                  prev.map((i) =>
+                                    i.product.$id === product.$id
+                                      ? { ...i, qtySold: Math.min(n, product.quantity) }
+                                      : i
+                                  )
+                                );
+                              }
+                            }
                             }
                             onBlur={() => commitPendingQty(product.$id, product.quantity)}
                             className="w-16 text-center tabular-nums"
