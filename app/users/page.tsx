@@ -164,7 +164,7 @@ export default function UsersPage() {
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder={t.labelName}
                   required
-                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
                 <input
                   type="email"
@@ -172,7 +172,7 @@ export default function UsersPage() {
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder={t.labelEmail}
                   required
-                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
                 <input
                   type="password"
@@ -181,7 +181,7 @@ export default function UsersPage() {
                   placeholder={t.userPassword}
                   required
                   minLength={8}
-                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
                 <Popover open={openFormRole} onOpenChange={setOpenFormRole}>
                   <PopoverTrigger asChild>

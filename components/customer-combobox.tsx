@@ -46,7 +46,7 @@ export function CustomerCombobox({
         onFocus={() => setOpen(true)}
         placeholder={placeholder}
         autoComplete="off"
-        className="w-full rounded-xl border border-input bg-background pl-9 pr-9 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all placeholder:text-muted-foreground"
+        className="w-full rounded-xl border border-input bg-background pl-9 pr-9 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all placeholder:text-muted-foreground"
       />
       {value && (
         <button

@@ -158,7 +158,7 @@ function ScanContent() {
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
                 placeholder={t.productNamePlaceholder}
-                className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                 required
                 autoFocus
               />
@@ -173,7 +173,7 @@ function ScanContent() {
                 placeholder="0.00"
                 step="0.01"
                 min="0"
-                className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                 required
               />
             </div>
@@ -187,7 +187,7 @@ function ScanContent() {
                 placeholder="1"
                 step="1"
                 min="1"
-                className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                 required
               />
             </div>

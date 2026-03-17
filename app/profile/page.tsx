@@ -9,7 +9,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { cn } from "@/lib/utils";
 
 const inputCls =
-  "rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all placeholder:text-muted-foreground";
+  "rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all placeholder:text-muted-foreground";
 
 export default function ProfilePage() {
   const { t } = useLanguage();

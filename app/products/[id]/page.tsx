@@ -223,7 +223,7 @@ export default function ProductDetailPage() {
                     setName(e.target.value);
                     setSaved(false);
                   }}
-                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                   required
                 />
               </div>
@@ -239,7 +239,7 @@ export default function ProductDetailPage() {
                   }}
                   step="0.01"
                   min="0"
-                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                   required
                 />
               </div>
@@ -255,7 +255,7 @@ export default function ProductDetailPage() {
                   }}
                   step="1"
                   min="0"
-                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                   required
                 />
               </div>
@@ -309,7 +309,7 @@ export default function ProductDetailPage() {
                     placeholder={t.addUnitsPlaceholder}
                     min="1"
                     step="1"
-                    className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                    className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
                   />
                 </div>
                 {addQty && parseInt(addQty) > 0 && product && (

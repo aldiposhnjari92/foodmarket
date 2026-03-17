@@ -304,7 +304,7 @@ export default function InvoicePage() {
                 value={sellerName}
                 onChange={(e) => setSellerName(e.target.value)}
                 placeholder={t.sellerPlaceholder}
-                className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+                className="rounded-xl border border-input bg-background px-3 py-2 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -328,7 +328,7 @@ export default function InvoicePage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t.searchPlaceholder}
-              className="w-full rounded-xl border border-input bg-background pl-9 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+              className="w-full rounded-xl border border-input bg-background pl-9 pr-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
             />
           </div>
 
@@ -413,7 +413,7 @@ export default function InvoicePage() {
                   value={manualName}
                   onChange={(e) => setManualName(e.target.value)}
                   placeholder={t.productName}
-                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className="rounded-lg border border-input bg-background px-3 py-2 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
                 <div className="flex gap-2">
                   <Input

@@ -115,7 +115,7 @@ export default function CustomersPage() {
         value={form[key]}
         onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
         placeholder={placeholder ?? ""}
-        className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
+        className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
       />
     </div>
   );
@@ -162,7 +162,7 @@ export default function CustomersPage() {
                   value={form.notes}
                   onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
                   rows={2}
-                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition-all resize-none"
+                  className="rounded-xl border border-input bg-background px-4 py-2.5 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all resize-none"
                 />
               </div>
               {saveError && (
