@@ -168,7 +168,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Logo />
         </header>
 
-        <main className="flex-1 overflow-y-auto p-5 print:overflow-visible print:p-0 lg:mt-0 mt-12.5 lg:h-auto h-[calc(100dvh-50px)]">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 print:overflow-visible print:p-0 lg:mt-0 mt-12.5 lg:h-auto h-[calc(100dvh-50px)]">{children}</main>
       </div>
     </div>
   );
