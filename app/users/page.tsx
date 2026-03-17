@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Trash2, ShieldCheck, ChevronDown } from "lucide-react";
+import { Loader2, Plus, Trash2, ShieldCheck, Check, ChevronsUpDown } from "lucide-react";
 import { AppLayout, AccessDenied } from "@/components/app-layout";
 import { getAllUserRoles, createUserRole, updateUserRole, deleteUserRole, UserRole } from "@/lib/user-roles";
 import { useRole } from "@/contexts/role-context";
@@ -18,6 +18,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 const ROLES: Role[] = ["admin", "manager", "seller"];
 
@@ -42,6 +51,10 @@ export default function UsersPage() {
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [addSuccess, setAddSuccess] = useState(false);
+
+  // Combobox open state
+  const [openFormRole, setOpenFormRole] = useState(false);
+  const [openRoleFor, setOpenRoleFor] = useState<string | null>(null);
 
   // Delete dialog
   const [deleteTarget, setDeleteTarget] = useState<UserRole | null>(null);
@@ -170,18 +183,38 @@ export default function UsersPage() {
                   minLength={8}
                   className="rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
-                <div className="relative">
-                  <select
-                    value={newRole}
-                    onChange={(e) => setNewRole(e.target.value as Role)}
-                    className="w-full appearance-none rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring pr-8"
-                  >
-                    {ROLES.map((r) => (
-                      <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                </div>
+                <Popover open={openFormRole} onOpenChange={setOpenFormRole}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openFormRole}
+                      className="w-full justify-between rounded-xl px-4 py-2.5 h-auto text-sm font-normal"
+                    >
+                      {ROLE_LABELS[newRole]}
+                      <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandList>
+                        <CommandEmpty>No role found.</CommandEmpty>
+                        <CommandGroup>
+                          {ROLES.map((r) => (
+                            <CommandItem
+                              key={r}
+                              value={r}
+                              onSelect={(val) => { setNewRole(val as Role); setOpenFormRole(false); }}
+                            >
+                              <Check className={cn("mr-2 size-4", newRole === r ? "opacity-100" : "opacity-0")} />
+                              {ROLE_LABELS[r]}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               {addError && (
                 <p className="rounded-lg bg-destructive/10 px-4 py-2.5 text-sm text-destructive">{addError}</p>
@@ -241,21 +274,37 @@ export default function UsersPage() {
                       <td className="px-4 py-3 font-medium">{u.name}</td>
                       <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">{u.email}</td>
                       <td className="px-4 py-3">
-                        <div className="relative inline-block">
-                          <select
-                            value={u.role}
-                            onChange={(e) => handleRoleChange(u, e.target.value as Role)}
-                            className={cn(
-                              "appearance-none rounded-full px-3 py-1 text-xs font-semibold pr-7 border-0 outline-none cursor-pointer",
-                              ROLE_COLORS[u.role]
-                            )}
-                          >
-                            {ROLES.map((r) => (
-                              <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                            ))}
-                          </select>
-                          <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 size-3" />
-                        </div>
+                        <Popover open={openRoleFor === u.$id} onOpenChange={(o) => setOpenRoleFor(o ? u.$id : null)}>
+                          <PopoverTrigger asChild>
+                            <button
+                              className={cn(
+                                "flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold cursor-pointer",
+                                ROLE_COLORS[u.role]
+                              )}
+                            >
+                              {ROLE_LABELS[u.role]}
+                              <ChevronsUpDown className="size-3 opacity-60" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-36 p-0">
+                            <Command>
+                              <CommandList>
+                                <CommandGroup>
+                                  {ROLES.map((r) => (
+                                    <CommandItem
+                                      key={r}
+                                      value={r}
+                                      onSelect={(val) => { handleRoleChange(u, val as Role); setOpenRoleFor(null); }}
+                                    >
+                                      <Check className={cn("mr-2 size-4", u.role === r ? "opacity-100" : "opacity-0")} />
+                                      {ROLE_LABELS[r]}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button

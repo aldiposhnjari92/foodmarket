@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx shadcn@latest add table input badge select --yes)"
+      "Bash(npx shadcn@latest add table input badge select --yes)",
+      "Bash(npx shadcn@latest add popover command calendar --yes)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

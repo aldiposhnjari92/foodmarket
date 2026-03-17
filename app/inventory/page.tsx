@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Loader2, ChevronDown, ChevronUp, BarChart3, ShoppingCart, Receipt, User } from "lucide-react";
+import { Loader2, ChevronDown, ChevronUp, BarChart3, ShoppingCart, Receipt, User, CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { AppLayout } from "@/components/app-layout";
 import { getSales, Sale, SaleItem } from "@/lib/sales";
 import { CustomerCombobox } from "@/components/customer-combobox";
@@ -11,14 +14,14 @@ import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
 import { AccessDenied } from "@/components/app-layout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Table,
   TableBody,
@@ -74,10 +77,11 @@ export default function InventoryPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [customerFilter, setCustomerFilter] = useState("");
   const [datePreset, setDatePreset] = useState<DatePreset>("all");
-  const [customFrom, setCustomFrom] = useState("");
-  const [customTo, setCustomTo] = useState("");
+  const [customFrom, setCustomFrom] = useState<Date | undefined>(undefined);
+  const [customTo, setCustomTo] = useState<Date | undefined>(undefined);
   const [sellers, setSellers] = useState<{ id: string; name: string }[]>([]);
   const [sellerFilter, setSellerFilter] = useState("");
+  const [openSellerCombo, setOpenSellerCombo] = useState(false);
 
   const isAdmin = role === "admin";
 
@@ -111,8 +115,8 @@ export default function InventoryPage() {
       let from: Date | null = null;
       let to: Date | null = null;
       if (datePreset === "custom") {
-        from = customFrom ? new Date(customFrom + "T00:00:00") : null;
-        to = customTo ? new Date(customTo + "T23:59:59") : null;
+        if (customFrom) { from = new Date(customFrom); from.setHours(0, 0, 0, 0); }
+        if (customTo) { to = new Date(customTo); to.setHours(23, 59, 59, 999); }
       } else {
         ({ from, to } = getPresetRange(datePreset));
       }
@@ -200,20 +204,48 @@ export default function InventoryPage() {
         <div className="flex flex-wrap gap-3 items-end">
           {/* Seller filter — admin only */}
           {isAdmin && sellers.length > 0 && (
-            <Select
-              value={sellerFilter || "__all__"}
-              onValueChange={(v) => setSellerFilter(v === "__all__" ? "" : v)}
-            >
-              <SelectTrigger className="w-44">
-                <SelectValue placeholder={t.allSellers} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">{t.allSellers}</SelectItem>
-                {sellers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={openSellerCombo} onOpenChange={setOpenSellerCombo}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openSellerCombo}
+                  className="w-44 justify-between"
+                >
+                  {sellerFilter
+                    ? sellers.find((s) => s.id === sellerFilter)?.name
+                    : t.allSellers}
+                  <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-44 p-0">
+                <Command>
+                  <CommandInput placeholder={t.allSellers} />
+                  <CommandList>
+                    <CommandEmpty>{t.noResults}</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="__all__"
+                        onSelect={() => { setSellerFilter(""); setOpenSellerCombo(false); }}
+                      >
+                        <Check className={cn("mr-2 size-4", !sellerFilter ? "opacity-100" : "opacity-0")} />
+                        {t.allSellers}
+                      </CommandItem>
+                      {sellers.map((s) => (
+                        <CommandItem
+                          key={s.id}
+                          value={s.name}
+                          onSelect={() => { setSellerFilter(s.id); setOpenSellerCombo(false); }}
+                        >
+                          <Check className={cn("mr-2 size-4", sellerFilter === s.id ? "opacity-100" : "opacity-0")} />
+                          {s.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           )}
 
           {/* Date preset buttons */}
@@ -233,24 +265,42 @@ export default function InventoryPage() {
           {/* Custom date range */}
           {datePreset === "custom" && (
             <div className="flex flex-wrap items-center gap-2">
-              <Input
-                type="date"
-                value={customFrom}
-                onChange={(e) => setCustomFrom(e.target.value)}
-                className="w-36 h-8 text-sm"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn("w-36 justify-start text-left font-normal", !customFrom && "text-muted-foreground")}
+                  >
+                    <CalendarIcon className="mr-2 size-4" />
+                    {customFrom ? format(customFrom, "dd MMM yyyy") : t.dateFrom}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} />
+                </PopoverContent>
+              </Popover>
               <span className="text-xs text-muted-foreground">{t.dateRangeTo}</span>
-              <Input
-                type="date"
-                value={customTo}
-                onChange={(e) => setCustomTo(e.target.value)}
-                className="w-36 h-8 text-sm"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn("w-36 justify-start text-left font-normal", !customTo && "text-muted-foreground")}
+                  >
+                    <CalendarIcon className="mr-2 size-4" />
+                    {customTo ? format(customTo, "dd MMM yyyy") : t.dateTo}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customTo} onSelect={setCustomTo} />
+                </PopoverContent>
+              </Popover>
               {(customFrom || customTo) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => { setCustomFrom(""); setCustomTo(""); }}
+                  onClick={() => { setCustomFrom(undefined); setCustomTo(undefined); }}
                 >
                   {t.clear}
                 </Button>

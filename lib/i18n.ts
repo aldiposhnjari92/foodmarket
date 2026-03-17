@@ -172,6 +172,7 @@ const en = {
   soldItems: "items sold",
   // Filters
   allSellers: "All sellers",
+  noResults: "No results found.",
   dateAll: "All time",
   dateToday: "Today",
   dateYesterday: "Yesterday",
@@ -179,6 +180,8 @@ const en = {
   dateMonth: "Last 30 days",
   dateCustom: "Custom range",
   dateRangeTo: "to",
+  dateFrom: "From",
+  dateTo: "To",
   clear: "Clear",
   filterResults: (n: number) => `${n} result${n !== 1 ? "s" : ""}`,
   // Invoice additions
@@ -386,6 +389,7 @@ const sq: typeof en = {
   soldItems: "artikuj të shitur",
   // Filters
   allSellers: "Të gjithë shitësit",
+  noResults: "Nuk u gjet asnjë rezultat.",
   dateAll: "Gjithë kohën",
   dateToday: "Sot",
   dateYesterday: "Dje",
@@ -393,6 +397,8 @@ const sq: typeof en = {
   dateMonth: "30 ditët e fundit",
   dateCustom: "Interval i personalizuar",
   dateRangeTo: "deri",
+  dateFrom: "Nga",
+  dateTo: "Deri",
   clear: "Pastro",
   filterResults: (n: number) => `${n} rezultat${n !== 1 ? "e" : ""}`,
   // Invoice additions
