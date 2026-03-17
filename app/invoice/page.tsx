@@ -235,7 +235,16 @@ export default function InvoicePage() {
     return item.customPrice !== undefined ? item.customPrice : item.product.price;
   };
 
-  const grandTotal = items.reduce((sum, i) => sum + effectivePrice(i) * i.qtySold, 0);
+  const effectiveQty = (item: InvoiceItem) => {
+    const raw = rawQtys[item.product.$id];
+    if (raw !== undefined) {
+      const n = parseInt(raw, 10);
+      if (!isNaN(n) && n > 0) return n;
+    }
+    return item.qtySold;
+  };
+
+  const grandTotal = items.reduce((sum, i) => sum + effectivePrice(i) * effectiveQty(i), 0);
 
   const handleConfirmSale = async (andPrint = false) => {
     if (items.length === 0) {
@@ -608,7 +617,7 @@ export default function InvoicePage() {
                     <TableCell className="text-right pr-0">
                       <div className="flex items-center justify-end gap-0.5">
                         <span className="text-sm font-medium tabular-nums">
-                          L {(effectivePrice(item) * item.qtySold).toFixed(2)}
+                          L {(effectivePrice(item) * effectiveQty(item)).toFixed(2)}
                         </span>
                         <button
                           onClick={() => removeItem(item.product.$id)}
