@@ -227,6 +227,24 @@ const en = {
   packagesToAdd: "Add number of packages",
   piecesLabel: (n: number) => `${n} pcs`,
   packageDetail: (pieces: number) => `${pieces} pcs/pkg`,
+  // Warehouse
+  navWarehouse: "Warehouse",
+  warehouseTitle: "Warehouse",
+  warehouseDesc: "Add products to the pool and assign them to users.",
+  addToWarehouse: "Add Product",
+  noWarehouseProducts: "No products in the warehouse yet.",
+  assignProducts: "Assign",
+  assignToUsers: "Assign to users…",
+  selectedCount: (n: number) => `${n} selected`,
+  assignSuccess: "Products assigned successfully.",
+  assignFailed: "Failed to assign products.",
+  selectProductsFirst: "Select at least one product to assign.",
+  selectUsersFirst: "Select at least one user to assign to.",
+  searchUsers: "Search users…",
+  noUsersFound: "No users found.",
+  colQuantity: "Qty",
+  assignedTo: "Assigned To",
+  rowsPerPage: "Rows per page",
 };
 
 const sq: typeof en = {
@@ -456,6 +474,24 @@ const sq: typeof en = {
   packagesToAdd: "Numri i Pakove për të shtuar",
   piecesLabel: (n: number) => `${n} copë`,
   packageDetail: (pieces: number) => `${pieces} copë/paketë`,
+  // Warehouse
+  navWarehouse: "Magazinë",
+  warehouseTitle: "Magazinë",
+  warehouseDesc: "Shtoni produkte dhe caktojini tek përdoruesit.",
+  addToWarehouse: "Shto Produkt",
+  noWarehouseProducts: "Nuk ka produkte në magazinë ende.",
+  assignProducts: "Cakto",
+  assignToUsers: "Cakto tek përdoruesit…",
+  selectedCount: (n: number) => `${n} të zgjedhura`,
+  assignSuccess: "Produktet u caktuan me sukses.",
+  assignFailed: "Caktimi i produkteve dështoi.",
+  selectProductsFirst: "Zgjidhni të paktën një produkt.",
+  selectUsersFirst: "Zgjidhni të paktën një përdorues.",
+  searchUsers: "Kërko përdorues…",
+  noUsersFound: "Nuk u gjet asnjë përdorues.",
+  colQuantity: "Sas.",
+  assignedTo: "Caktuar Tek",
+  rowsPerPage: "Rreshta për faqe",
 };
 
 export const translations: Record<Locale, typeof en> = { en, sq };

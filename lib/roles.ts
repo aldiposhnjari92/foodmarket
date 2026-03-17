@@ -14,6 +14,7 @@ export const PERMISSIONS = {
   users_view:       ["admin"],
   users_add:        ["admin"],
   users_edit:       ["admin"],
+  warehouse_view:   ["admin"],
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;

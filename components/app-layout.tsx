@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, ScanLine, FileText, Archive, Users, UserCheck, LogOut, Menu, Loader2, Globe, ShieldAlert, CircleUserRound } from "lucide-react";
+import { LayoutDashboard, Package, ScanLine, FileText, Archive, Users, UserCheck, LogOut, Menu, Loader2, Globe, ShieldAlert, CircleUserRound, Warehouse } from "lucide-react";
 import { getCurrentUser, logout } from "@/lib/auth";
 import type { User } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -43,6 +43,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/inventory",  label: t.navInventory,  icon: Archive,         permission: "inventory" },
     { href: "/customers",  label: t.navCustomers,  icon: UserCheck,       permission: "customers_view" },
     { href: "/users",      label: t.navUsers,      icon: Users,           permission: "users_view" },
+    { href: "/warehouse",  label: t.navWarehouse,  icon: Warehouse,       permission: "warehouse_view" },
   ];
 
   const navItems = allNavItems.filter((item) => can(item.permission));
