@@ -99,30 +99,45 @@ export default function InvoicePage() {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // ── Package helpers ──────────────────────────────────────────────────────────
+  /** Max sellable qty: packages for package products, pieces for singles */
+  const maxQty = (product: Product) =>
+    product.is_package && product.pieces_per_package
+      ? Math.floor(product.quantity / product.pieces_per_package)
+      : product.quantity;
+
+  /** Base unit price: package cost for packages, price for singles */
+  const basePrice = (product: Product) =>
+    product.is_package && product.pieces_per_package
+      ? product.price * product.pieces_per_package
+      : product.price;
+
   // ── Pending qty helpers (product list) ──────────────────────────────────────
   const getPendingQtyRaw = (id: string) => pendingQtys[id] ?? "1";
 
-  const commitPendingQty = (id: string, stock: number) => {
+  const commitPendingQty = (id: string, product: Product) => {
+    const max = maxQty(product);
     const raw = pendingQtys[id] ?? "1";
     const n = parseInt(raw, 10);
-    const clamped = isNaN(n) || n < 1 ? 1 : Math.min(n, stock);
+    const clamped = isNaN(n) || n < 1 ? 1 : Math.min(n, max);
     setPendingQtys((prev) => ({ ...prev, [id]: String(clamped) }));
   };
 
   // ── Add item ────────────────────────────────────────────────────────────────
   const addItem = (product: Product) => {
+    const max = maxQty(product);
     const raw = pendingQtys[product.$id] ?? "1";
-    const qty = Math.max(1, Math.min(parseInt(raw, 10) || 1, product.quantity));
+    const qty = Math.max(1, Math.min(parseInt(raw, 10) || 1, max));
     setItems((prev) => {
       const existing = prev.find((i) => i.product.$id === product.$id);
       if (existing) {
         return prev.map((i) =>
           i.product.$id === product.$id
-            ? { ...i, qtySold: Math.min(i.qtySold + qty, i.product.quantity) }
+            ? { ...i, qtySold: Math.min(i.qtySold + qty, max) }
             : i
         );
       }
-      if (product.quantity < 1) return prev;
+      if (max < 1) return prev;
       return [...prev, { product, qtySold: qty }];
     });
   };
@@ -153,7 +168,7 @@ export default function InvoicePage() {
       prev
         .map((i) => {
           if (i.product.$id !== id) return i;
-          const max = i.isManual ? Infinity : i.product.quantity;
+          const max = i.isManual ? Infinity : maxQty(i.product);
           return { ...i, qtySold: Math.max(0, Math.min(i.qtySold + delta, max)) };
         })
         .filter((i) => i.qtySold > 0)
@@ -162,7 +177,7 @@ export default function InvoicePage() {
     setRawQtys((prev) => {
       const item = items.find((i) => i.product.$id === id);
       if (!item) return prev;
-      const max = item.isManual ? Infinity : item.product.quantity;
+      const max = item.isManual ? Infinity : maxQty(item.product);
       const next = Math.max(0, Math.min(item.qtySold + delta, max));
       return { ...prev, [id]: String(next) };
     });
@@ -182,7 +197,7 @@ export default function InvoicePage() {
       prev
         .map((i) => {
           if (i.product.$id !== id) return i;
-          const max = i.isManual ? Infinity : i.product.quantity;
+          const max = i.isManual ? Infinity : maxQty(i.product);
           return { ...i, qtySold: Math.min(n, max) };
         })
         .filter((i) => i.qtySold > 0)
@@ -200,7 +215,7 @@ export default function InvoicePage() {
       ? rawPrices[item.product.$id]
       : item.customPrice !== undefined
       ? String(item.customPrice)
-      : String(item.product.price);
+      : String(basePrice(item.product));
 
   const commitPrice = (id: string) => {
     const raw = rawPrices[id];
@@ -232,7 +247,7 @@ export default function InvoicePage() {
       const n = parseFloat(raw);
       if (!isNaN(n)) return n;
     }
-    return item.customPrice !== undefined ? item.customPrice : item.product.price;
+    return item.customPrice !== undefined ? item.customPrice : basePrice(item.product);
   };
 
   const effectiveQty = (item: InvoiceItem) => {
@@ -257,12 +272,18 @@ export default function InvoicePage() {
       const inventoryItems = items.filter((i) => !i.isManual);
       if (inventoryItems.length > 0) {
         await sellProducts(
-          inventoryItems.map((i) => ({
-            id: i.product.$id,
-            qtySold: i.qtySold,
-            currentQty: i.product.quantity,
-            imageId: i.product.image_id,
-          }))
+          inventoryItems.map((i) => {
+            // For package products, qtySold is in packages — convert to pieces for inventory
+            const piecesDeducted = i.product.is_package && i.product.pieces_per_package
+              ? i.qtySold * i.product.pieces_per_package
+              : i.qtySold;
+            return {
+              id: i.product.$id,
+              qtySold: piecesDeducted,
+              currentQty: i.product.quantity,
+              imageId: i.product.image_id,
+            };
+          })
         );
       }
 
@@ -272,6 +293,10 @@ export default function InvoicePage() {
         qty_sold: i.qtySold,
         unit_price: effectivePrice(i),
         total: effectivePrice(i) * i.qtySold,
+        ...(i.product.is_package && {
+          is_package: true,
+          pieces_per_package: i.product.pieces_per_package,
+        }),
       }));
       try {
         await createSale(invoiceNumber, saleItems, grandTotal, 0, grandTotal, buyerName, sellerName, userId ?? "");
@@ -361,7 +386,9 @@ export default function InvoicePage() {
               ) : (
                 filtered.map((product) => {
                   const inCart = items.find((i) => i.product.$id === product.$id);
-                  const noStock = product.quantity < 1;
+                  const available = maxQty(product);
+                  const noStock = available < 1;
+                  const pkgPrice = basePrice(product);
                   return (
                     <div
                       key={product.$id}
@@ -375,9 +402,16 @@ export default function InvoicePage() {
                       )}
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{product.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium truncate">{product.name}</p>
+                          {product.is_package && (
+                            <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide shrink-0">
+                              {t.packageBadge}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
-                          L {product.price.toFixed(2)} · {t.stockLabel}: {product.quantity}
+                          L {pkgPrice.toFixed(2)}{product.is_package ? `/${t.packageType.toLowerCase()}` : ""} · {t.stockLabel}: {available}{product.is_package ? ` ${t.packageType.toLowerCase()}s` : ""}
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5 ml-2 shrink-0">
@@ -390,7 +424,7 @@ export default function InvoicePage() {
                           <Input
                             type="number"
                             min="1"
-                            max={product.quantity}
+                            max={available}
                             value={getPendingQtyRaw(product.$id)}
                             onClick={(e) => e.stopPropagation()}
                             onChange={(e) => {
@@ -401,14 +435,13 @@ export default function InvoicePage() {
                                 setItems((prev) =>
                                   prev.map((i) =>
                                     i.product.$id === product.$id
-                                      ? { ...i, qtySold: Math.min(n, product.quantity) }
+                                      ? { ...i, qtySold: Math.min(n, available) }
                                       : i
                                   )
                                 );
                               }
-                            }
-                            }
-                            onBlur={() => commitPendingQty(product.$id, product.quantity)}
+                            }}
+                            onBlur={() => commitPendingQty(product.$id, product)}
                             className="w-16 text-center tabular-nums"
                           />
                         )}
@@ -566,6 +599,11 @@ export default function InvoicePage() {
                       {item.isManual && (
                         <span className="block text-xs text-primary font-medium">{t.manualBadge}</span>
                       )}
+                      {item.product.is_package && (
+                        <span className="block text-xs text-muted-foreground">
+                          {t.packageDetail(item.product.pieces_per_package ?? 0)}
+                        </span>
+                      )}
                     </TableCell>
 
                     {/* Qty */}
@@ -581,7 +619,7 @@ export default function InvoicePage() {
                           type="number"
                           value={getQtyDisplay(item)}
                           min="1"
-                          max={item.isManual ? undefined : item.product.quantity}
+                          max={item.isManual ? undefined : maxQty(item.product)}
                           onChange={(e) => {
                             const val = e.target.value;
                             setRawQtys((prev) => ({ ...prev, [item.product.$id]: val }));
@@ -590,7 +628,7 @@ export default function InvoicePage() {
                               setItems((prev) =>
                                 prev.map((i) => {
                                   if (i.product.$id !== item.product.$id) return i;
-                                  const max = i.isManual ? Infinity : i.product.quantity;
+                                  const max = i.isManual ? Infinity : maxQty(i.product);
                                   return { ...i, qtySold: Math.min(n, max) };
                                 })
                               );
@@ -607,7 +645,7 @@ export default function InvoicePage() {
                         </button>
                       </div>
                       <span className="hidden print:block text-sm tabular-nums">
-                        {item.qtySold}
+                        {item.qtySold}{item.product.is_package ? ` ${t.packageType.toLowerCase()}` : ""}
                       </span>
                     </TableCell>
 
@@ -638,8 +676,11 @@ export default function InvoicePage() {
                         />
                         {item.customPrice !== undefined && (
                           <span className="text-xs text-muted-foreground line-through">
-                            L {item.product.price.toFixed(2)}
+                            L {basePrice(item.product).toFixed(2)}
                           </span>
+                        )}
+                        {item.product.is_package && (
+                          <span className="text-xs text-muted-foreground">/{t.packageType.toLowerCase()}</span>
                         )}
                       </div>
                       <span className="hidden print:block text-sm tabular-nums">

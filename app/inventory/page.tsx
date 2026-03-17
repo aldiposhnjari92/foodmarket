@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { AppLayout } from "@/components/app-layout";
 import { getSales, Sale, SaleItem } from "@/lib/sales";
+import { getProducts, Product } from "@/lib/products";
 import { CustomerCombobox } from "@/components/customer-combobox";
 import { getAllUserRoles } from "@/lib/user-roles";
 import { cn } from "@/lib/utils";
@@ -73,6 +74,7 @@ export default function InventoryPage() {
   const { t } = useLanguage();
   const { role, userId, can, roleLoading } = useRole();
   const [sales, setSales] = useState<Sale[]>([]);
+  const [productMap, setProductMap] = useState<Record<string, Product>>({});
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [customerFilter, setCustomerFilter] = useState("");
@@ -94,6 +96,12 @@ export default function InventoryPage() {
       .then(setSales)
       .catch(() => setSales([]))
       .finally(() => setLoading(false));
+
+    getProducts().then((products) => {
+      const map: Record<string, Product> = {};
+      for (const p of products) map[p.$id] = p;
+      setProductMap(map);
+    }).catch(() => {});
 
     if (isAdmin) {
       getAllUserRoles()
@@ -428,22 +436,39 @@ export default function InventoryPage() {
                               </div>
                             )}
                             <div className="flex flex-col gap-1">
-                              {saleItems.map((item, idx) => (
+                              {saleItems.map((item, idx) => {
+                                // Fall back to current product data for sales recorded before package support
+                                const currentProduct = productMap[item.product_id];
+                                const isPkg = item.is_package ?? currentProduct?.is_package ?? false;
+                                const piecesPerPkg = item.pieces_per_package ?? currentProduct?.pieces_per_package;
+                                return (
                                 <div
                                   key={idx}
                                   className="flex items-center justify-between py-1 text-sm"
                                 >
                                   <span className="text-foreground">
                                     {item.product_name}
+                                    {isPkg && (
+                                      <span className="ml-1.5 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
+                                        {t.packageBadge}
+                                      </span>
+                                    )}
                                     <span className="ml-2 text-xs text-muted-foreground">
-                                      ×{item.qty_sold} @ L {item.unit_price.toFixed(2)}
+                                      ×{item.qty_sold}
+                                      {isPkg && piecesPerPkg
+                                        ? ` ${t.packageType.toLowerCase()} (${item.qty_sold * piecesPerPkg} ${t.piecesLabel(item.qty_sold * piecesPerPkg).split(" ")[1]})`
+                                        : ""
+                                      }
+                                      {" @ L "}{item.unit_price.toFixed(2)}
+                                      {isPkg ? `/${t.packageType.toLowerCase()}` : ""}
                                     </span>
                                   </span>
                                   <span className="font-medium tabular-nums">
                                     L {item.total.toFixed(2)}
                                   </span>
                                 </div>
-                              ))}
+                                );
+                              })}
                               <div className="mt-2 pt-2 border-t border-border">
                                 <div className="flex justify-between text-sm font-bold">
                                   <span>{t.grandTotal}</span>

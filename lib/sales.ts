@@ -9,6 +9,8 @@ export interface SaleItem {
   qty_sold: number;
   unit_price: number;
   total: number;
+  is_package?: boolean;
+  pieces_per_package?: number;
 }
 
 export interface Sale {
