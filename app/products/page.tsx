@@ -64,7 +64,7 @@ export default function ProductsPage() {
           {can("products_add") && (
             <div className="flex items-center gap-2">
               <Button variant="outline" asChild>
-                <Link href="/add-manual-order">
+                <Link href="/products/add-manual-order">
                   <PlusCircle />
                   {t.addManually}
                 </Link>
