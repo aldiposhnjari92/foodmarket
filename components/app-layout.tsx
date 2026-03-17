@@ -158,7 +158,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Mobile header */}
-        <header className="print:hidden flex items-center gap-3 border-b border-border px-4 py-3 lg:hidden">
+        <header className="print:hidden fixed top-0 left-0 right-0 z-10 flex h-12.5 items-center gap-3 border-b border-border bg-background px-4 lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
             className="rounded-lg p-2 hover:bg-muted transition-colors"
@@ -168,7 +168,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <span className="font-semibold">{t.appName}</span>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 print:overflow-visible print:p-0">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 print:overflow-visible print:p-0 lg:mt-0 mt-12.5 lg:h-auto h-[calc(100dvh-50px)]">{children}</main>
       </div>
     </div>
   );
