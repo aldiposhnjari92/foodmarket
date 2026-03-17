@@ -165,7 +165,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           >
             <Menu className="size-5" />
           </button>
-          <span className="font-semibold">{t.appName}</span>
+          <Logo />
         </header>
 
         <main className="flex-1 overflow-y-auto p-6 print:overflow-visible print:p-0 lg:mt-0 mt-12.5 lg:h-auto h-[calc(100dvh-50px)]">{children}</main>

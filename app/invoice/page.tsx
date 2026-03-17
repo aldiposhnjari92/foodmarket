@@ -498,12 +498,13 @@ export default function InvoicePage() {
             )}
 
             {/* Unified grid: header + all rows share the same column track sizes */}
-            <div className="grid grid-cols-[minmax(80px,1fr)_auto_auto_auto] gap-x-2 sm:gap-x-4">
+            <div className="overflow-x-auto -mx-1 px-1">
+            <div className="grid grid-cols-[1fr_7rem_6rem_6rem] gap-x-2 sm:gap-x-3 min-w-85">
               {/* Header row */}
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2">
                 {t.colName}
               </span>
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 text-right">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 text-center">
                 {t.quantityLabel}
               </span>
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2 text-right">
@@ -536,10 +537,10 @@ export default function InvoicePage() {
 
                   {/* Qty */}
                   <div className="self-center py-2.5 border-t border-border/60">
-                    <div className="flex items-center gap-0.5 sm:gap-1 print:hidden">
+                    <div className="flex items-center justify-center gap-0.5 print:hidden">
                       <button
                         onClick={() => updateQty(item.product.$id, -1)}
-                        className="rounded p-0.5 hover:bg-muted transition-colors"
+                        className="rounded p-0.5 hover:bg-muted transition-colors shrink-0"
                       >
                         <Minus className="size-3" />
                       </button>
@@ -552,16 +553,16 @@ export default function InvoicePage() {
                           setRawQtys((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
                         }
                         onBlur={() => commitQty(item.product.$id)}
-                        className="w-12 sm:w-16 text-center tabular-nums"
+                        className="w-10 text-center tabular-nums"
                       />
                       <button
                         onClick={() => updateQty(item.product.$id, 1)}
-                        className="rounded p-0.5 hover:bg-muted transition-colors"
+                        className="rounded p-0.5 hover:bg-muted transition-colors shrink-0"
                       >
                         <Plus className="size-3" />
                       </button>
                     </div>
-                    <span className="hidden print:block text-sm text-right tabular-nums">
+                    <span className="hidden print:block text-sm text-center tabular-nums">
                       {item.qtySold}
                     </span>
                   </div>
@@ -578,7 +579,7 @@ export default function InvoicePage() {
                           setRawPrices((prev) => ({ ...prev, [item.product.$id]: e.target.value }))
                         }
                         onBlur={() => commitPrice(item.product.$id)}
-                        className="w-20 sm:w-24 text-right tabular-nums"
+                        className="w-full text-right tabular-nums"
                       />
                       {item.customPrice !== undefined && (
                         <span className="text-xs text-muted-foreground line-through">
@@ -593,13 +594,13 @@ export default function InvoicePage() {
 
                   {/* Total + remove */}
                   <div className="self-center py-2.5 border-t border-border/60">
-                    <div className="flex items-center justify-end gap-0.5 sm:gap-1">
+                    <div className="flex items-center justify-end gap-0.5">
                       <span className="text-sm font-medium tabular-nums">
                         L {(effectivePrice(item) * item.qtySold).toFixed(2)}
                       </span>
                       <button
                         onClick={() => removeItem(item.product.$id)}
-                        className="print:hidden rounded p-0.5 hover:bg-destructive/10 hover:text-destructive transition-colors ml-0.5"
+                        className="print:hidden rounded p-0.5 hover:bg-destructive/10 hover:text-destructive transition-colors ml-0.5 shrink-0"
                       >
                         <Trash2 className="size-3" />
                       </button>
@@ -607,6 +608,7 @@ export default function InvoicePage() {
                   </div>
                 </React.Fragment>
               ))}
+            </div>
             </div>
 
             {/* Totals */}
