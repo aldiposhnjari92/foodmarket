@@ -61,6 +61,7 @@ const en = {
   errNameRequired: "Product name is required.",
   errValidPrice: "Enter a valid price.",
   errSaveFailed: "Failed to save product. Please try again.",
+  errProductExists: "A product with this name already exists.",
   buyerNameRequired: "Client name is required.",
   // Product detail
   backToProducts: "Back to Products",
@@ -309,6 +310,7 @@ const sq: typeof en = {
   errNameRequired: "Emri i produktit është i detyrueshëm.",
   errValidPrice: "Shkruani një çmim të vlefshëm.",
   errSaveFailed: "Ruajtja e produktit dështoi. Ju lutemi provoni përsëri.",
+  errProductExists: "Një produkt me këtë emër ekziston tashmë.",
   buyerNameRequired: "Emri i klientit është i detyrueshëm.",
   // Product detail
   backToProducts: "Kthehu te Produktet",

@@ -14,7 +14,7 @@ import {
 import { AppLayout, AccessDenied } from "@/components/app-layout";
 import { useRole } from "@/contexts/role-context";
 import { useLanguage } from "@/contexts/language-context";
-import { getProducts, createProduct, deleteProduct, Product } from "@/lib/products";
+import { getProducts, createProduct, deleteProduct, updateProductOwner, Product } from "@/lib/products";
 import { getAllUserRoles, UserRole } from "@/lib/user-roles";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -310,6 +310,11 @@ export default function WarehousePage() {
 
     const totalQty = isPackage ? parsedQty * parsedPieces : parsedQty;
 
+    const nameExists = products.some(
+      (p) => !p.owner_id && p.name.toLowerCase() === newName.trim().toLowerCase()
+    );
+    if (nameExists) { setAddError(t.errProductExists); return; }
+
     setAdding(true);
     try {
       const product = await createProduct(
@@ -368,18 +373,30 @@ export default function WarehousePage() {
               .map((copy) => deleteProduct(copy.$id, copy.image_id))
           );
 
-          const addOps = toAdd.map((assigneeId) =>
-            createProduct(
-              product.name,
-              product.price,
-              product.image_id,
-              product.quantity,
-              assigneeId,
-              product.is_package,
-              product.pieces_per_package,
-              userId ?? undefined
-            )
-          );
+          const addOps: Promise<unknown>[] = [];
+          if (!product.owner_id && toAdd.length > 0) {
+            // Reuse the base (unassigned) warehouse row for the first user
+            addOps.push(updateProductOwner(product.$id, toAdd[0]));
+            toAdd.slice(1).forEach((assigneeId) =>
+              addOps.push(
+                createProduct(
+                  product.name, product.price, product.image_id,
+                  product.quantity, assigneeId, product.is_package,
+                  product.pieces_per_package, userId ?? undefined
+                )
+              )
+            );
+          } else {
+            toAdd.forEach((assigneeId) =>
+              addOps.push(
+                createProduct(
+                  product.name, product.price, product.image_id,
+                  product.quantity, assigneeId, product.is_package,
+                  product.pieces_per_package, userId ?? undefined
+                )
+              )
+            );
+          }
 
           return [...removeOps, ...addOps];
         })

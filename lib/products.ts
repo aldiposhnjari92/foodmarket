@@ -100,6 +100,25 @@ export async function updateProduct(
   return toProduct(row);
 }
 
+export async function productNameExists(name: string): Promise<boolean> {
+  const response = await tablesDB.listRows({
+    databaseId: DATABASE_ID,
+    tableId: TABLE_ID,
+    queries: [Query.equal("name", name), Query.limit(1)],
+  });
+  return response.rows.length > 0;
+}
+
+export async function updateProductOwner(id: string, ownerId: string | null): Promise<Product> {
+  const row = await tablesDB.updateRow({
+    databaseId: DATABASE_ID,
+    tableId: TABLE_ID,
+    rowId: id,
+    data: { owner_id: ownerId },
+  });
+  return toProduct(row);
+}
+
 export async function deleteProduct(id: string, imageId?: string): Promise<void> {
   await tablesDB.deleteRow({
     databaseId: DATABASE_ID,

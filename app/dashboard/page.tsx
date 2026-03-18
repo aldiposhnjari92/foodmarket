@@ -108,14 +108,10 @@ export default function DashboardPage() {
           </Select>
         )}
 
-        {/* Inventory stats */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard icon={Package} label={t.totalProducts} value={loading ? null : products.length.toString()} />
           <StatCard icon={DollarSign} label={t.totalValue} value={loading ? null : `L ${totalValue.toFixed(2)}`} />
-        </div>
-
-        {/* Sales stats */}
-        <div className="grid grid-cols-2 gap-4">
           <StatCard
             icon={ShoppingCart}
             label={t.totalSold}
@@ -204,7 +200,7 @@ function StatCard({
 }) {
   return (
     <div className={cn(
-      "rounded-2xl border p-5",
+      "rounded-lg border p-4",
       accent ? "border-primary/20 bg-primary/5" : "border-border bg-card"
     )}>
       <div className={cn(

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { AccessDenied } from "@/components/app-layout";
-import { createProduct } from "@/lib/products";
+import { createProduct, productNameExists } from "@/lib/products";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { useRole } from "@/contexts/role-context";
@@ -41,6 +41,9 @@ export default function AddManualOrderPage() {
     if (isNaN(parsedPriceNum) || parsedPriceNum < 0) { setError(t.errValidPrice); return; }
     if (isNaN(parsedQtyNum) || parsedQtyNum < 1) { setError(t.errValidPrice); return; }
     if (isPackage && (isNaN(parsedPieces) || parsedPieces < 1)) { setError(t.errValidPrice); return; }
+
+    const exists = await productNameExists(productName.trim());
+    if (exists) { setError(t.errProductExists); return; }
 
     const totalQty = isPackage ? parsedQtyNum * parsedPieces : parsedQtyNum;
 

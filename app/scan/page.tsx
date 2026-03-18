@@ -6,7 +6,7 @@ import { CheckCircle2, Loader2, Barcode, Camera } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { CameraCapture } from "@/components/camera-capture";
 import { BarcodeScanner } from "@/components/barcode-scanner";
-import { createProduct } from "@/lib/products";
+import { createProduct, productNameExists } from "@/lib/products";
 import { uploadProductImage } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
@@ -90,6 +90,9 @@ function ScanContent() {
     if (isNaN(parsedPriceNum) || parsedPriceNum < 0) { setError(t.errValidPrice); return; }
     if (isNaN(parsedQtyNum) || parsedQtyNum < 1) { setError(t.errValidPrice); return; }
     if (isPackage && (isNaN(parsedPieces) || parsedPieces < 1)) { setError(t.errValidPrice); return; }
+
+    const exists = await productNameExists(productName.trim());
+    if (exists) { setError(t.errProductExists); return; }
 
     // For packages: quantity stored = number of packages × pieces per package
     const totalQty = isPackage ? parsedQtyNum * parsedPieces : parsedQtyNum;
