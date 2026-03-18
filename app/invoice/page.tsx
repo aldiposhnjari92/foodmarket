@@ -349,6 +349,8 @@ export default function InvoicePage() {
                 value={sellerName}
                 onChange={(e) => setSellerName(e.target.value)}
                 placeholder={t.sellerPlaceholder}
+                readOnly={true}
+                disabled={true}
                 className="rounded-xl border border-input bg-background px-3 py-2 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring transition-all"
               />
             </div>
