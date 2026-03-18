@@ -69,8 +69,8 @@ export default function CustomersPage() {
   // Search & pagination
   const [search, setSearch] = useState("");
   const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
-  const [pageSize, setPageSize] = useState(() => Number(sessionStorage.getItem("customers_pageSize")) || 10);
-  const [page, setPage] = useState(() => Number(sessionStorage.getItem("customers_page")) || 1);
+  const [pageSize, setPageSize] = useState(() => typeof sessionStorage !== "undefined" ? Number(sessionStorage.getItem("customers_pageSize")) || 10 : 10);
+  const [page, setPage] = useState(() => typeof sessionStorage !== "undefined" ? Number(sessionStorage.getItem("customers_page")) || 1 : 1);
 
   useEffect(() => { sessionStorage.setItem("customers_pageSize", String(pageSize)); }, [pageSize]);
   useEffect(() => { sessionStorage.setItem("customers_page", String(page)); }, [page]);

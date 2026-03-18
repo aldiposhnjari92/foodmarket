@@ -113,8 +113,8 @@ export default function InventoryPage() {
 
   // Pagination
   const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
-  const [pageSize, setPageSize] = useState(() => Number(sessionStorage.getItem("inventory_pageSize")) || 10);
-  const [page, setPage] = useState(() => Number(sessionStorage.getItem("inventory_page")) || 1);
+  const [pageSize, setPageSize] = useState(() => typeof sessionStorage !== "undefined" ? Number(sessionStorage.getItem("inventory_pageSize")) || 10 : 10);
+  const [page, setPage] = useState(() => typeof sessionStorage !== "undefined" ? Number(sessionStorage.getItem("inventory_page")) || 1 : 1);
 
   useEffect(() => { sessionStorage.setItem("inventory_pageSize", String(pageSize)); }, [pageSize]);
   useEffect(() => { sessionStorage.setItem("inventory_page", String(page)); }, [page]);

@@ -422,8 +422,8 @@ export default function WarehousePage() {
 
   // ── Pagination ──
   const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
-  const [pageSize, setPageSize] = useState(() => Number(sessionStorage.getItem("warehouse_pageSize")) || 10);
-  const [page, setPage] = useState(() => Number(sessionStorage.getItem("warehouse_page")) || 1);
+  const [pageSize, setPageSize] = useState(() => typeof sessionStorage !== "undefined" ? Number(sessionStorage.getItem("warehouse_pageSize")) || 10 : 10);
+  const [page, setPage] = useState(() => typeof sessionStorage !== "undefined" ? Number(sessionStorage.getItem("warehouse_page")) || 1 : 1);
 
   // Keep sessionStorage in sync whenever page or pageSize changes
   useEffect(() => {
