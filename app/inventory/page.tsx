@@ -375,13 +375,13 @@ export default function InventoryPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted">
-                  <th className="sticky top-0 left-0 z-30 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap border-r border-border">{t.invoiceNo}</th>
-                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.saleDate}</th>
-                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.customer}</th>
-                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.seller}</th>
-                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-right align-middle font-medium text-muted-foreground whitespace-nowrap">{t.itemsCount}</th>
-                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-right align-middle font-medium text-muted-foreground whitespace-nowrap">{t.revenue}</th>
-                  <th className="sticky top-0 z-20 bg-muted h-10 px-4" />
+                  <th className="sticky top-0 left-0 z-[3] bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap border-r border-border">{t.invoiceNo}</th>
+                  <th className="sticky top-0 z-[2] bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.saleDate}</th>
+                  <th className="sticky top-0 z-[2] bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.customer}</th>
+                  <th className="sticky top-0 z-[2] bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.seller}</th>
+                  <th className="sticky top-0 z-[2] bg-muted h-10 px-4 text-right align-middle font-medium text-muted-foreground whitespace-nowrap">{t.itemsCount}</th>
+                  <th className="sticky top-0 z-[2] bg-muted h-10 px-4 text-right align-middle font-medium text-muted-foreground whitespace-nowrap">{t.revenue}</th>
+                  <th className="sticky top-0 z-[2] bg-muted h-10 px-4" />
                 </tr>
               </thead>
               <tbody>
@@ -399,7 +399,7 @@ export default function InventoryPage() {
                           )}
                           onClick={() => toggleExpand(sale.$id)}
                         >
-                          <td className="sticky left-0 z-10 bg-background px-4 py-3 font-mono text-xs font-medium border-r border-border">
+                          <td className="sticky left-0 z-[1] bg-background px-4 py-3 font-mono text-xs font-medium border-r border-border">
                             {sale.invoice_number}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
