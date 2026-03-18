@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ScanLine, Package, DollarSign, TrendingUp, ShoppingCart, BarChart3, Loader2 } from "lucide-react";
+import { ScanLine, Package, DollarSign, ShoppingCart, BarChart3, Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { getProducts, Product } from "@/lib/products";
 import { useRole } from "@/contexts/role-context";
@@ -71,7 +71,6 @@ export default function DashboardPage() {
   }, [role, userId, isAdmin, selectedSeller]);
 
   const totalValue = products.reduce((sum, p) => sum + p.price, 0);
-  const avgPrice = products.length > 0 ? totalValue / products.length : 0;
   const recent = products.slice(0, 5);
 
   return (
@@ -110,10 +109,9 @@ export default function DashboardPage() {
         )}
 
         {/* Inventory stats */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4">
           <StatCard icon={Package} label={t.totalProducts} value={loading ? null : products.length.toString()} />
           <StatCard icon={DollarSign} label={t.totalValue} value={loading ? null : `L ${totalValue.toFixed(2)}`} />
-          <StatCard icon={TrendingUp} label={t.avgPrice} value={loading ? null : `L ${avgPrice.toFixed(2)}`} />
         </div>
 
         {/* Sales stats */}

@@ -100,7 +100,7 @@ function UserMultiSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="min-w-55 h-auto min-h-9 justify-between flex-wrap gap-1 px-3 py-1.5 text-sm font-normal"
+          className="w-full sm:min-w-55 sm:w-auto h-auto min-h-9 justify-between flex-wrap gap-1 px-3 py-1.5 text-sm font-normal"
         >
           {selectedUsers.length === 0 ? (
             <span className="text-muted-foreground">{placeholder}</span>
@@ -588,7 +588,7 @@ export default function WarehousePage() {
               <span className="text-sm font-medium text-primary">
                 {t.selectedCount(selectedCount)}
               </span>
-              <div className="flex-1 flex flex-wrap items-center gap-2">
+              <div className="flex-1 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
                 <UserMultiSelect
                   users={users}
                   selectedIds={assignUserIds}
@@ -650,19 +650,19 @@ export default function WarehousePage() {
               <table className="min-w-160 w-full caption-bottom text-sm">
                 <thead className="[&_tr]:border-b">
                   <tr className="border-b hover:bg-transparent">
-                    <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">
+                    <th className="sticky top-0 left-0 z-30 bg-muted w-12 h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap">
                       <Checkbox
                         checked={allSelected}
                         indeterminate={someSelected}
                         onChange={toggleAll}
                       />
                     </th>
-                    <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">{t.colName}</th>
-                    <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">{t.colPrice}</th>
-                    <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">{t.colQuantity}</th>
-                    <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">{t.assignedTo}</th>
-                    <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">{t.colAddedBy}</th>
-                    <th className="sticky top-0 z-10 bg-muted h-10 px-4" />
+                    <th className="sticky top-0 left-12 z-30 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap border-r border-border">{t.colName}</th>
+                    <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap">{t.colPrice}</th>
+                    <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap">{t.colQuantity}</th>
+                    <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap">{t.assignedTo}</th>
+                    <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap">{t.colAddedBy}</th>
+                    <th className="sticky top-0 z-20 bg-muted h-10 px-4" />
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
@@ -695,7 +695,7 @@ export default function WarehousePage() {
                         }}
                       >
                         <td
-                          className="p-2 px-4 align-middle whitespace-nowrap"
+                          className="sticky left-0 z-10 bg-background w-12 p-2 px-4 align-middle whitespace-nowrap"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Checkbox
@@ -703,7 +703,7 @@ export default function WarehousePage() {
                             onChange={(e) => toggleRow(product.$id, e)}
                           />
                         </td>
-                        <td className="p-2 px-4 align-middle font-medium whitespace-nowrap">
+                        <td className="sticky left-12 z-10 bg-background p-2 px-4 align-middle font-medium whitespace-nowrap border-r border-border">
                           <span className="flex items-center gap-2">
                             {product.name}
                             {product.is_package && (

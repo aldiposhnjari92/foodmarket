@@ -197,38 +197,38 @@ export default function InventoryPage() {
         </div>
 
         {/* Summary stats */}
-        <div className="shrink-0 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-            <div className="mb-2 flex items-center gap-2 text-primary">
-              <Receipt className="size-4" />
-              <span className="text-xs font-medium uppercase tracking-wide">{t.invoiceTitle}</span>
+        <div className="shrink-0 grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3 sm:p-5">
+            <div className="mb-1 sm:mb-2 flex items-center gap-1.5 sm:gap-2 text-primary">
+              <Receipt className="size-3.5 sm:size-4 shrink-0" />
+              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wide truncate">{t.invoiceTitle}</span>
             </div>
             {loading ? (
-              <div className="h-8 w-16 animate-pulse rounded-lg bg-muted" />
+              <div className="h-7 w-10 animate-pulse rounded-lg bg-muted sm:h-8 sm:w-16" />
             ) : (
-              <p className="text-2xl font-bold">{filtered.length}</p>
+              <p className="text-xl font-bold sm:text-2xl">{filtered.length}</p>
             )}
           </div>
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-            <div className="mb-2 flex items-center gap-2 text-primary">
-              <ShoppingCart className="size-4" />
-              <span className="text-xs font-medium uppercase tracking-wide">{t.totalSold}</span>
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3 sm:p-5">
+            <div className="mb-1 sm:mb-2 flex items-center gap-1.5 sm:gap-2 text-primary">
+              <ShoppingCart className="size-3.5 sm:size-4 shrink-0" />
+              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wide truncate">{t.totalSold}</span>
             </div>
             {loading ? (
-              <div className="h-8 w-16 animate-pulse rounded-lg bg-muted" />
+              <div className="h-7 w-10 animate-pulse rounded-lg bg-muted sm:h-8 sm:w-16" />
             ) : (
-              <p className="text-2xl font-bold">{totalUnits}</p>
+              <p className="text-xl font-bold sm:text-2xl">{totalUnits}</p>
             )}
           </div>
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-            <div className="mb-2 flex items-center gap-2 text-primary">
-              <BarChart3 className="size-4" />
-              <span className="text-xs font-medium uppercase tracking-wide">{t.totalRevenue}</span>
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3 sm:p-5">
+            <div className="mb-1 sm:mb-2 flex items-center gap-1.5 sm:gap-2 text-primary">
+              <BarChart3 className="size-3.5 sm:size-4 shrink-0" />
+              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wide truncate">{t.totalRevenue}</span>
             </div>
             {loading ? (
-              <div className="h-8 w-24 animate-pulse rounded-lg bg-muted" />
+              <div className="h-7 w-16 animate-pulse rounded-lg bg-muted sm:h-8 sm:w-24" />
             ) : (
-              <p className="text-2xl font-bold">L {totalRevenue.toFixed(2)}</p>
+              <p className="text-xl font-bold sm:text-2xl">L {totalRevenue.toFixed(2)}</p>
             )}
           </div>
         </div>
@@ -371,17 +371,17 @@ export default function InventoryPage() {
             </p>
           </div>
         ) : (
-          <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border">
+          <div className="flex-1 min-h-48 overflow-auto rounded-xl border border-border">
             <table className="w-full text-sm">
               <thead>
-                <tr className="sticky top-0 z-10 border-b bg-muted">
-                  <th className="h-10 w-32 px-4 text-left align-middle font-medium text-muted-foreground">{t.invoiceNo}</th>
-                  <th className="h-10 w-44 px-4 text-left align-middle font-medium text-muted-foreground">{t.saleDate}</th>
-                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.customer}</th>
-                  <th className="h-10 w-36 px-4 text-left align-middle font-medium text-muted-foreground">{t.seller}</th>
-                  <th className="h-10 w-28 px-4 text-right align-middle font-medium text-muted-foreground">{t.itemsCount}</th>
-                  <th className="h-10 w-28 px-4 text-right align-middle font-medium text-muted-foreground">{t.revenue}</th>
-                  <th className="h-10 w-8 px-4" />
+                <tr className="border-b bg-muted">
+                  <th className="sticky top-0 left-0 z-30 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap border-r border-border">{t.invoiceNo}</th>
+                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.saleDate}</th>
+                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.customer}</th>
+                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.seller}</th>
+                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-right align-middle font-medium text-muted-foreground whitespace-nowrap">{t.itemsCount}</th>
+                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-right align-middle font-medium text-muted-foreground whitespace-nowrap">{t.revenue}</th>
+                  <th className="sticky top-0 z-20 bg-muted h-10 px-4" />
                 </tr>
               </thead>
               <tbody>
@@ -399,7 +399,7 @@ export default function InventoryPage() {
                           )}
                           onClick={() => toggleExpand(sale.$id)}
                         >
-                          <td className="px-4 py-3 font-mono text-xs font-medium">
+                          <td className="sticky left-0 z-10 bg-background px-4 py-3 font-mono text-xs font-medium border-r border-border">
                             {sale.invoice_number}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">

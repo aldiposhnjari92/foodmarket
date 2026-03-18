@@ -253,13 +253,13 @@ export default function CustomersPage() {
             <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="sticky top-0 z-10 border-b bg-muted">
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.customerName}</th>
-                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">{t.customerPhone}</th>
-                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">{t.customerEmail}</th>
-                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">{t.customerAddress}</th>
-                    {isAdmin && <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground xl:table-cell">{t.colAddedBy}</th>}
-                    <th className="w-20 px-4 py-3" />
+                  <tr className="border-b bg-muted">
+                    <th className="sticky top-0 left-0 z-30 bg-muted px-4 py-3 text-left font-medium text-muted-foreground whitespace-nowrap border-r border-border">{t.customerName}</th>
+                    <th className="sticky top-0 z-20 bg-muted hidden px-4 py-3 text-left font-medium text-muted-foreground whitespace-nowrap sm:table-cell">{t.customerPhone}</th>
+                    <th className="sticky top-0 z-20 bg-muted hidden px-4 py-3 text-left font-medium text-muted-foreground whitespace-nowrap md:table-cell">{t.customerEmail}</th>
+                    <th className="sticky top-0 z-20 bg-muted hidden px-4 py-3 text-left font-medium text-muted-foreground whitespace-nowrap lg:table-cell">{t.customerAddress}</th>
+                    {isAdmin && <th className="sticky top-0 z-20 bg-muted hidden px-4 py-3 text-left font-medium text-muted-foreground whitespace-nowrap xl:table-cell">{t.colAddedBy}</th>}
+                    <th className="sticky top-0 z-20 bg-muted px-4 py-3" />
                   </tr>
                 </thead>
                 <tbody>
@@ -278,7 +278,7 @@ export default function CustomersPage() {
                         savedId === c.$id && "bg-green-500/5"
                       )}
                     >
-                      <td className="px-4 py-3 font-medium">{c.name}</td>
+                      <td className="sticky left-0 z-10 bg-background px-4 py-3 font-medium border-r border-border">{c.name}</td>
                       <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">{c.phone || "—"}</td>
                       <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">{c.email || "—"}</td>
                       <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell truncate max-w-xs">{c.address || "—"}</td>

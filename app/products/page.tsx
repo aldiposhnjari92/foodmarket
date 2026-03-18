@@ -143,20 +143,20 @@ export default function ProductsPage() {
           <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border">
             <table className="w-full text-sm">
               <thead>
-                <tr className="sticky top-0 z-10 border-b bg-muted">
-                  <th className="h-10 w-14 px-4 text-left align-middle font-medium text-muted-foreground" />
-                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.colName}</th>
-                  <th className="h-10 w-28 px-4 text-right align-middle font-medium text-muted-foreground">{t.colPrice}</th>
-                  <th className="h-10 w-20 px-4 text-right align-middle font-medium text-muted-foreground">{t.colStock}</th>
-                  <th className="h-10 w-36 px-4 text-left align-middle font-medium text-muted-foreground">{t.colDateAdded}</th>
-                  {isAdmin && <th className="h-10 w-32 px-4 text-left align-middle font-medium text-muted-foreground">{t.colAddedBy}</th>}
-                  <th className="h-10 w-12 px-4" />
+                <tr className="border-b bg-muted">
+                  <th className="sticky top-0 left-0 z-30 bg-muted w-18 h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" />
+                  <th className="sticky top-0 left-18 z-30 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap border-r border-border">{t.colName}</th>
+                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-right align-middle font-medium text-muted-foreground whitespace-nowrap">{t.colPrice}</th>
+                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-right align-middle font-medium text-muted-foreground whitespace-nowrap">{t.colStock}</th>
+                  <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.colDateAdded}</th>
+                  {isAdmin && <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.colAddedBy}</th>}
+                  <th className="sticky top-0 z-20 bg-muted h-10 px-4" />
                 </tr>
               </thead>
               <tbody>
                 {pagedProducts.map((product) => (
                   <tr key={product.$id} className="border-b last:border-0 transition-colors hover:bg-muted/50">
-                    <td className="p-2 px-4 align-middle">
+                    <td className="sticky left-0 z-10 bg-background w-18 p-2 px-4 align-middle">
                       {product.image_id ? (
                         <div className="relative size-10 rounded-md overflow-hidden shrink-0">
                           <Image
@@ -172,7 +172,7 @@ export default function ProductsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="p-2 px-4 align-middle font-medium">
+                    <td className="sticky left-18 z-10 bg-background p-2 px-4 align-middle font-medium border-r border-border">
                       <div className="flex items-center gap-2 min-w-0">
                         <Link
                           href={`/products/${product.$id}`}
