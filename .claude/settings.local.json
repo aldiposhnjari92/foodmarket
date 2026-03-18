@@ -8,7 +8,11 @@
       "Bash(npm run:*)",
       "Bash(node -e \"require\\(''''./lib/i18n.ts''''\\)\")",
       "Bash(npx ts-node:*)",
-      "Bash(node -e \"const {execSync} = require\\(''''child_process''''\\); console.log\\(execSync\\(''''npx next build 2>&1'''', {encoding:''''utf8''''}\\).slice\\(-500\\)\\)\")"
+      "Bash(node -e \"const {execSync} = require\\(''''child_process''''\\); console.log\\(execSync\\(''''npx next build 2>&1'''', {encoding:''''utf8''''}\\).slice\\(-500\\)\\)\")",
+      "Bash(for f:*)",
+      "Bash(do)",
+      "Bash(sed -i 's/ z-30 / z-[3] /g; s/ z-20 / z-[2] /g; s/ z-10 / z-[1] /g' \"$f\")",
+      "Bash(done)"
     ]
   }
 }
