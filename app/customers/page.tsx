@@ -250,77 +250,67 @@ export default function CustomersPage() {
               <p className="text-sm text-muted-foreground">{t.noCustomers}</p>
             </div>
           ) : (
-            <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border overflow-hidden">
-
-              {/* Fixed header — never scrolls */}
-              <div className="shrink-0 border-b">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.customerName}</th>
-                      <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">{t.customerPhone}</th>
-                      <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">{t.customerEmail}</th>
-                      <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">{t.customerAddress}</th>
-                      {isAdmin && <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground xl:table-cell">{t.colAddedBy}</th>}
-                      <th className="px-4 py-3 w-20" />
+            <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="sticky top-0 z-10 border-b bg-muted">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t.customerName}</th>
+                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">{t.customerPhone}</th>
+                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">{t.customerEmail}</th>
+                    <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">{t.customerAddress}</th>
+                    {isAdmin && <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground xl:table-cell">{t.colAddedBy}</th>}
+                    <th className="w-20 px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedCustomers.length === 0 ? (
+                    <tr>
+                      <td colSpan={isAdmin ? 6 : 5} className="py-14 text-center text-sm text-muted-foreground">
+                        {t.noProductsMatching(search)}
+                      </td>
                     </tr>
-                  </thead>
-                </table>
-              </div>
-
-              {/* Scrollable body */}
-              <div className="flex-1 overflow-y-auto">
-                {pagedCustomers.length === 0 ? (
-                  <div className="flex items-center justify-center py-14 text-sm text-muted-foreground">
-                    {t.noProductsMatching(search)}
-                  </div>
-                ) : (
-                  <table className="w-full text-sm">
-                    <tbody>
-                      {pagedCustomers.map((c, i) => (
-                        <tr
-                          key={c.$id}
-                          className={cn(
-                            "border-b last:border-0 transition-colors hover:bg-muted/50",
-                            i % 2 !== 0 && "bg-muted/10",
-                            savedId === c.$id && "bg-green-500/5"
+                  ) : pagedCustomers.map((c, i) => (
+                    <tr
+                      key={c.$id}
+                      className={cn(
+                        "border-b last:border-0 transition-colors hover:bg-muted/50",
+                        i % 2 !== 0 && "bg-muted/10",
+                        savedId === c.$id && "bg-green-500/5"
+                      )}
+                    >
+                      <td className="px-4 py-3 font-medium">{c.name}</td>
+                      <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">{c.phone || "—"}</td>
+                      <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">{c.email || "—"}</td>
+                      <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell truncate max-w-xs">{c.address || "—"}</td>
+                      {isAdmin && (
+                        <td className="hidden px-4 py-3 text-muted-foreground xl:table-cell">
+                          {c.created_by ? (userById[c.created_by]?.name ?? "—") : "—"}
+                        </td>
+                      )}
+                      <td className="w-20 px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {can("customers_edit") && (
+                            <button
+                              onClick={() => openEdit(c)}
+                              className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                            >
+                              <Pencil className="size-4" />
+                            </button>
                           )}
-                        >
-                          <td className="px-4 py-3 font-medium">{c.name}</td>
-                          <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">{c.phone || "—"}</td>
-                          <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">{c.email || "—"}</td>
-                          <td className="hidden px-4 py-3 text-muted-foreground lg:table-cell truncate max-w-xs">{c.address || "—"}</td>
-                          {isAdmin && (
-                            <td className="hidden px-4 py-3 text-muted-foreground xl:table-cell">
-                              {c.created_by ? (userById[c.created_by]?.name ?? "—") : "—"}
-                            </td>
+                          {can("customers_delete") && (
+                            <button
+                              onClick={() => setDeleteTarget(c)}
+                              className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
                           )}
-                          <td className="px-4 py-3 text-right w-20">
-                            <div className="flex items-center justify-end gap-1">
-                              {can("customers_edit") && (
-                                <button
-                                  onClick={() => openEdit(c)}
-                                  className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                                >
-                                  <Pencil className="size-4" />
-                                </button>
-                              )}
-                              {can("customers_delete") && (
-                                <button
-                                  onClick={() => setDeleteTarget(c)}
-                                  className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                                >
-                                  <Trash2 className="size-4" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 

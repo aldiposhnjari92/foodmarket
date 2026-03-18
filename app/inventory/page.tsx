@@ -40,19 +40,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-function TableCols() {
-  return (
-    <colgroup>
-      <col className="w-32" />
-      <col className="w-44" />
-      <col />
-      <col className="w-36" />
-      <col className="w-28" />
-      <col className="w-28" />
-      <col className="w-8" />
-    </colgroup>
-  );
-}
 
 type DatePreset = "all" | "today" | "yesterday" | "week" | "month" | "custom";
 
@@ -384,31 +371,20 @@ export default function InventoryPage() {
             </p>
           </div>
         ) : (
-          <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border overflow-hidden">
-
-            {/* Fixed header */}
-            <div className="shrink-0 border-b">
-              <table className="w-full table-fixed text-sm">
-                <TableCols />
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.invoiceNo}</th>
-                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.saleDate}</th>
-                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.customer}</th>
-                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.seller}</th>
-                    <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">{t.itemsCount}</th>
-                    <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">{t.revenue}</th>
-                    <th className="h-10 px-4" />
-                  </tr>
-                </thead>
-              </table>
-            </div>
-
-            {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full table-fixed text-sm">
-                <TableCols />
-                <tbody>
+          <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="sticky top-0 z-10 border-b bg-muted">
+                  <th className="h-10 w-32 px-4 text-left align-middle font-medium text-muted-foreground">{t.invoiceNo}</th>
+                  <th className="h-10 w-44 px-4 text-left align-middle font-medium text-muted-foreground">{t.saleDate}</th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.customer}</th>
+                  <th className="h-10 w-36 px-4 text-left align-middle font-medium text-muted-foreground">{t.seller}</th>
+                  <th className="h-10 w-28 px-4 text-right align-middle font-medium text-muted-foreground">{t.itemsCount}</th>
+                  <th className="h-10 w-28 px-4 text-right align-middle font-medium text-muted-foreground">{t.revenue}</th>
+                  <th className="h-10 w-8 px-4" />
+                </tr>
+              </thead>
+              <tbody>
                   {pagedFiltered.map((sale, i) => {
                     let saleItems: SaleItem[] = [];
                     try { saleItems = JSON.parse(sale.items_json); } catch { /* skip */ }
@@ -530,7 +506,6 @@ export default function InventoryPage() {
                   })}
                 </tbody>
               </table>
-            </div>
           </div>
         )}
 
