@@ -657,7 +657,7 @@ export default function WarehousePage() {
                         onChange={toggleAll}
                       />
                     </th>
-                    <th className="sticky top-0 left-12 z-30 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap border-r border-border">{t.colName}</th>
+                    <th className="sticky top-0 left-12 z-30 bg-muted w-32.5 sm:w-50 h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap border-r border-border">{t.colName}</th>
                     <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap">{t.colPrice}</th>
                     <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap">{t.colQuantity}</th>
                     <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground whitespace-nowrap">{t.assignedTo}</th>
@@ -703,7 +703,7 @@ export default function WarehousePage() {
                             onChange={(e) => toggleRow(product.$id, e)}
                           />
                         </td>
-                        <td className="sticky left-12 z-10 bg-background p-2 px-4 align-middle font-medium whitespace-nowrap border-r border-border">
+                        <td className="sticky left-12 z-10 bg-background w-32.5 sm:w-50 p-2 px-4 align-middle font-medium border-r border-border">
                           <span className="flex items-center gap-2">
                             {product.name}
                             {product.is_package && (

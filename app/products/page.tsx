@@ -144,8 +144,8 @@ export default function ProductsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted">
-                  <th className="sticky top-0 left-0 z-30 bg-muted w-18 h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap" />
-                  <th className="sticky top-0 left-18 z-30 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap border-r border-border">{t.colName}</th>
+                  <th className="sticky top-0 left-0 z-30 bg-muted w-18 h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap hidden sm:table-cell" />
+                  <th className="sticky top-0 left-0 sm:left-18 z-30 bg-muted w-32.5 sm:w-50 h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap border-r border-border">{t.colName}</th>
                   <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-right align-middle font-medium text-muted-foreground whitespace-nowrap">{t.colPrice}</th>
                   <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-right align-middle font-medium text-muted-foreground whitespace-nowrap">{t.colStock}</th>
                   <th className="sticky top-0 z-20 bg-muted h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap">{t.colDateAdded}</th>
@@ -156,7 +156,7 @@ export default function ProductsPage() {
               <tbody>
                 {pagedProducts.map((product) => (
                   <tr key={product.$id} className="border-b last:border-0 transition-colors hover:bg-muted/50">
-                    <td className="sticky left-0 z-10 bg-background w-18 p-2 px-4 align-middle">
+                    <td className="sticky left-0 z-10 bg-background w-18 p-2 px-4 align-middle hidden sm:table-cell">
                       {product.image_id ? (
                         <div className="relative size-10 rounded-md overflow-hidden shrink-0">
                           <Image
@@ -172,7 +172,7 @@ export default function ProductsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="sticky left-18 z-10 bg-background p-2 px-4 align-middle font-medium border-r border-border">
+                    <td className="sticky left-0 sm:left-18 z-10 bg-background w-32.5 sm:w-50 p-2 px-4 align-middle font-medium border-r border-border">
                       <div className="flex items-center gap-2 min-w-0">
                         <Link
                           href={`/products/${product.$id}`}
