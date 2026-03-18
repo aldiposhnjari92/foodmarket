@@ -339,7 +339,7 @@ export default function InvoicePage() {
         {/* ── Product selector ── */}
         <div className="print:hidden w-full xl:flex-1 xl:min-w-0">
           {/* Parties */}
-          <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="mb-4 grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 {t.soldBy}
