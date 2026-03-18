@@ -53,7 +53,8 @@ export default function AddManualOrderPage() {
         totalQty,
         userId ?? undefined,
         isPackage,
-        isPackage ? parsedPieces : undefined
+        isPackage ? parsedPieces : undefined,
+        userId ?? undefined
       );
       router.push("/products");
     } catch {

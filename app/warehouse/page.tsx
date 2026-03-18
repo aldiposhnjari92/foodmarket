@@ -178,7 +178,7 @@ function UserMultiSelect({
 
 export default function WarehousePage() {
   const { t } = useLanguage();
-  const { can, roleLoading } = useRole();
+  const { can, roleLoading, userId } = useRole();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<UserRole[]>([]);
@@ -265,9 +265,18 @@ export default function WarehousePage() {
   const someSelected =
     warehouseProducts.some((p) => selectedIds.has(p.$id)) && !allSelected;
 
+  // Clear combobox when nothing is selected
+  useEffect(() => {
+    if (selectedIds.size === 0) setAssignUserIds([]);
+  }, [selectedIds]);
+
   const toggleAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       setSelectedIds(new Set(warehouseProducts.map((p) => p.$id)));
+      const ids = Array.from(
+        new Set(warehouseProducts.flatMap((p) => p.assignees.map((u) => u.user_id)))
+      );
+      setAssignUserIds(ids);
     } else {
       setSelectedIds(new Set());
     }
@@ -280,10 +289,18 @@ export default function WarehousePage() {
       else next.delete(id);
       return next;
     });
+    if (e.target.checked) {
+      const row = warehouseProducts.find((p) => p.$id === id);
+      if (row?.assignees.length) {
+        setAssignUserIds((prev) =>
+          Array.from(new Set([...prev, ...row.assignees.map((u) => u.user_id)]))
+        );
+      }
+    }
   };
 
   // ── Add product ──
-  const handleAdd = async (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setAddError(null);
     if (!newName.trim()) { setAddError(t.errNameRequired); return; }
@@ -302,7 +319,8 @@ export default function WarehousePage() {
         totalQty,
         undefined,
         isPackage,
-        isPackage ? parsedPieces : undefined
+        isPackage ? parsedPieces : undefined,
+        userId ?? undefined
       );
       setProducts((prev) => [product, ...prev]);
       setNewName(""); setNewPrice(""); setNewQty("1");
@@ -321,29 +339,56 @@ export default function WarehousePage() {
       setAssignResult({ ok: false, msg: t.selectProductsFirst });
       return;
     }
-    if (assignUserIds.length === 0) {
-      setAssignResult({ ok: false, msg: t.selectUsersFirst });
-      return;
-    }
     setAssigning(true);
     setAssignResult(null);
     try {
       const selected = warehouseProducts.filter((p) => selectedIds.has(p.$id));
       await Promise.all(
-        selected.flatMap((product) =>
-          assignUserIds.map((userId) =>
+        selected.flatMap((product) => {
+          const currentIds = product.assignees.map((u) => u.user_id);
+
+          // Users to add: in combobox but not yet assigned
+          const toAdd = assignUserIds.filter((id) => !currentIds.includes(id));
+
+          // Users to remove: currently assigned but deselected in combobox
+          const toRemove = currentIds.filter((id) => !assignUserIds.includes(id));
+
+          const removeOps = toRemove.flatMap((ownerId) =>
+            // Use filter (not find) to delete ALL copies for this user —
+            // duplicate copies accumulate when Assign was clicked multiple times
+            // with the old code that always created without deduplicating.
+            products
+              .filter(
+                (p) =>
+                  p.owner_id === ownerId &&
+                  p.name === product.name &&
+                  p.price === product.price &&
+                  !!p.is_package === !!product.is_package
+              )
+              .map((copy) => deleteProduct(copy.$id, copy.image_id))
+          );
+
+          const addOps = toAdd.map((assigneeId) =>
             createProduct(
               product.name,
               product.price,
               product.image_id,
               product.quantity,
-              userId,
+              assigneeId,
               product.is_package,
-              product.pieces_per_package
+              product.pieces_per_package,
+              userId ?? undefined
             )
-          )
-        )
+          );
+
+          return [...removeOps, ...addOps];
+        })
       );
+      // Re-fetch from DB so all existing + new assignments are grouped correctly.
+      // Optimistic merging can silently break grouping when price precision or
+      // is_package presence differs between the locally-held base and the new copy.
+      const refreshed = await getProducts();
+      setProducts(refreshed);
       setSelectedIds(new Set());
       setAssignUserIds([]);
       setAssignResult({ ok: true, msg: t.assignSuccess });
@@ -377,14 +422,22 @@ export default function WarehousePage() {
 
   // ── Pagination ──
   const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
-  const [pageSize, setPageSize] = useState(10);
-  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(() => Number(sessionStorage.getItem("warehouse_pageSize")) || 10);
+  const [page, setPage] = useState(() => Number(sessionStorage.getItem("warehouse_page")) || 1);
 
-  // Reset to first page whenever search or page size changes
-  useEffect(() => { setPage(1); }, [search, pageSize]);
+  // Keep sessionStorage in sync whenever page or pageSize changes
+  useEffect(() => {
+    sessionStorage.setItem("warehouse_pageSize", String(pageSize));
+  }, [pageSize]);
+
+  useEffect(() => {
+    sessionStorage.setItem("warehouse_page", String(page));
+  }, [page]);
 
   const totalPages = Math.max(1, Math.ceil(warehouseProducts.length / pageSize));
-  const pagedProducts = warehouseProducts.slice((page - 1) * pageSize, page * pageSize);
+  // Clamp so a stale page number never shows an empty table (e.g. after deletions)
+  const effectivePage = Math.min(page, totalPages);
+  const pagedProducts = warehouseProducts.slice((effectivePage - 1) * pageSize, effectivePage * pageSize);
 
   return (
     <AppLayout>
@@ -576,7 +629,7 @@ export default function WarehousePage() {
           {!loading && (
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder={t.searchPlaceholder}
               className="max-w-xs"
             />
@@ -594,7 +647,7 @@ export default function WarehousePage() {
             </div>
           ) : (
             <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-border">
-              <table className="min-w-[640px] w-full caption-bottom text-sm">
+              <table className="min-w-160 w-full caption-bottom text-sm">
                 <thead className="[&_tr]:border-b">
                   <tr className="border-b hover:bg-transparent">
                     <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">
@@ -608,13 +661,14 @@ export default function WarehousePage() {
                     <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">{t.colPrice}</th>
                     <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">{t.colQuantity}</th>
                     <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">{t.assignedTo}</th>
+                    <th className="sticky top-0 z-10 bg-muted h-10 px-4 text-left align-middle font-medium text-foreground">{t.colAddedBy}</th>
                     <th className="sticky top-0 z-10 bg-muted h-10 px-4" />
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
                   {warehouseProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                      <td colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
                         {t.noProductsMatching(search)}
                       </td>
                     </tr>
@@ -625,14 +679,20 @@ export default function WarehousePage() {
                         key={product.$id}
                         data-state={isSelected ? "selected" : undefined}
                         className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted cursor-pointer"
-                        onClick={() =>
+                        onClick={() => {
+                          const adding = !selectedIds.has(product.$id);
                           setSelectedIds((prev) => {
                             const next = new Set(prev);
                             if (next.has(product.$id)) next.delete(product.$id);
                             else next.add(product.$id);
                             return next;
-                          })
-                        }
+                          });
+                          if (adding && product.assignees.length > 0) {
+                            setAssignUserIds((prev) =>
+                              Array.from(new Set([...prev, ...product.assignees.map((u) => u.user_id)]))
+                            );
+                          }
+                        }}
                       >
                         <td
                           className="p-2 px-4 align-middle whitespace-nowrap"
@@ -677,6 +737,9 @@ export default function WarehousePage() {
                             <span className="text-muted-foreground text-xs">—</span>
                           )}
                         </td>
+                        <td className="p-2 px-4 align-middle whitespace-nowrap text-muted-foreground text-sm">
+                          {product.created_by ? (userById[product.created_by]?.name ?? "—") : "—"}
+                        </td>
                         <td
                           className="p-2 px-4 align-middle text-right whitespace-nowrap"
                           onClick={(e) => e.stopPropagation()}
@@ -706,7 +769,7 @@ export default function WarehousePage() {
                 <span>{t.rowsPerPage}</span>
                 <Select
                   value={String(pageSize)}
-                  onValueChange={(v) => setPageSize(Number(v))}
+                  onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}
                 >
                   <SelectTrigger size="sm" className="w-16">
                     <SelectValue />
@@ -718,7 +781,7 @@ export default function WarehousePage() {
                   </SelectContent>
                 </Select>
                 <span>
-                  {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, warehouseProducts.length)} of {warehouseProducts.length}
+                  {(effectivePage - 1) * pageSize + 1}–{Math.min(effectivePage * pageSize, warehouseProducts.length)} of {warehouseProducts.length}
                 </span>
               </div>
 
@@ -729,7 +792,7 @@ export default function WarehousePage() {
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
+                        disabled={effectivePage === 1}
                       />
                     </PaginationItem>
 
@@ -737,9 +800,9 @@ export default function WarehousePage() {
                       const showPage =
                         n === 1 ||
                         n === totalPages ||
-                        (n >= page - 1 && n <= page + 1);
-                      const showLeadingEllipsis = n === page - 2 && page - 2 > 1;
-                      const showTrailingEllipsis = n === page + 2 && page + 2 < totalPages;
+                        (n >= effectivePage - 1 && n <= effectivePage + 1);
+                      const showLeadingEllipsis = n === effectivePage - 2 && effectivePage - 2 > 1;
+                      const showTrailingEllipsis = n === effectivePage + 2 && effectivePage + 2 < totalPages;
 
                       if (showLeadingEllipsis || showTrailingEllipsis) {
                         return (
@@ -752,7 +815,7 @@ export default function WarehousePage() {
                       return (
                         <PaginationItem key={n}>
                           <PaginationLink
-                            isActive={n === page}
+                            isActive={n === effectivePage}
                             onClick={() => setPage(n)}
                           >
                             {n}
@@ -764,7 +827,7 @@ export default function WarehousePage() {
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={page === totalPages}
+                        disabled={effectivePage === totalPages}
                       />
                     </PaginationItem>
                   </PaginationContent>

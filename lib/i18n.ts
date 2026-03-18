@@ -39,6 +39,7 @@ const en = {
   addManually: "Add Manually",
   searchPlaceholder: "Search products…",
   colDateAdded: "Date Added",
+  colAddedBy: "Added by",
   noProductsAdd: "No products yet. Scan one to add it!",
   itemsInStock: (n: number) => `${n} item${n !== 1 ? "s" : ""} in stock`,
   noProductsMatching: (search: string) => `No products matching "${search}"`,
@@ -60,6 +61,7 @@ const en = {
   errNameRequired: "Product name is required.",
   errValidPrice: "Enter a valid price.",
   errSaveFailed: "Failed to save product. Please try again.",
+  buyerNameRequired: "Client name is required.",
   // Product detail
   backToProducts: "Back to Products",
   productNotFound: "Product not found.",
@@ -307,6 +309,7 @@ const sq: typeof en = {
   errNameRequired: "Emri i produktit është i detyrueshëm.",
   errValidPrice: "Shkruani një çmim të vlefshëm.",
   errSaveFailed: "Ruajtja e produktit dështoi. Ju lutemi provoni përsëri.",
+  buyerNameRequired: "Emri i klientit është i detyrueshëm.",
   // Product detail
   backToProducts: "Kthehu te Produktet",
   productNotFound: "Produkti nuk u gjet.",
@@ -489,6 +492,7 @@ const sq: typeof en = {
   selectUsersFirst: "Zgjidhni të paktën një përdorues.",
   searchUsers: "Kërko përdorues…",
   noUsersFound: "Nuk u gjet asnjë përdorues.",
+  colAddedBy: "Shtuar nga",
   colQuantity: "Sas.",
   assignedTo: "Caktuar Tek",
   rowsPerPage: "Rreshta për faqe",

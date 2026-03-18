@@ -24,13 +24,35 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+function TableCols() {
+  return (
+    <colgroup>
+      <col className="w-32" />
+      <col className="w-44" />
+      <col />
+      <col className="w-36" />
+      <col className="w-28" />
+      <col className="w-28" />
+      <col className="w-8" />
+    </colgroup>
+  );
+}
 
 type DatePreset = "all" | "today" | "yesterday" | "week" | "month" | "custom";
 
@@ -88,6 +110,14 @@ export default function InventoryPage() {
   const [openToPicker, setOpenToPicker] = useState(false);
 
   const isAdmin = role === "admin";
+
+  // Pagination
+  const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+  const [pageSize, setPageSize] = useState(() => Number(sessionStorage.getItem("inventory_pageSize")) || 10);
+  const [page, setPage] = useState(() => Number(sessionStorage.getItem("inventory_page")) || 1);
+
+  useEffect(() => { sessionStorage.setItem("inventory_pageSize", String(pageSize)); }, [pageSize]);
+  useEffect(() => { sessionStorage.setItem("inventory_page", String(page)); }, [page]);
 
   useEffect(() => {
     if (roleLoading || !role) return;
@@ -160,6 +190,10 @@ export default function InventoryPage() {
     }
   }, 0);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const effectivePage = Math.min(page, totalPages);
+  const pagedFiltered = filtered.slice((effectivePage - 1) * pageSize, effectivePage * pageSize);
+
   const toggleExpand = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
@@ -167,14 +201,16 @@ export default function InventoryPage() {
   return (
     <AppLayout>
       {!roleLoading && !can("inventory") ? <AccessDenied /> : (
-      <div className="flex flex-col gap-6">
-        <div>
+      <div className="flex flex-col h-full gap-4">
+
+        {/* Page header */}
+        <div className="shrink-0">
           <h1 className="text-2xl font-bold">{t.inventoryTitle}</h1>
           <p className="text-sm text-muted-foreground">{t.inventoryDesc}</p>
         </div>
 
         {/* Summary stats */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="shrink-0 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
             <div className="mb-2 flex items-center gap-2 text-primary">
               <Receipt className="size-4" />
@@ -211,7 +247,7 @@ export default function InventoryPage() {
         </div>
 
         {/* Filters row */}
-        <div className="flex flex-wrap gap-3 items-end">
+        <div className="shrink-0 flex flex-wrap gap-3 items-end">
           {/* Seller filter — admin only */}
           {isAdmin && sellers.length > 0 && (
             <Popover open={openSellerCombo} onOpenChange={setOpenSellerCombo}>
@@ -265,7 +301,7 @@ export default function InventoryPage() {
                 key={p.value}
                 size="sm"
                 variant={datePreset === p.value ? "default" : "outline"}
-                onClick={() => setDatePreset(p.value)}
+                onClick={() => { setDatePreset(p.value); setPage(1); }}
               >
                 {t[p.tKey]}
               </Button>
@@ -287,7 +323,7 @@ export default function InventoryPage() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={customFrom} onSelect={(d) => { setCustomFrom(d); setOpenFromPicker(false); }} disabled={customTo ? { after: customTo } : undefined} />
+                  <Calendar mode="single" selected={customFrom} onSelect={(d) => { setCustomFrom(d); setOpenFromPicker(false); setPage(1); }} disabled={customTo ? { after: customTo } : undefined} />
                 </PopoverContent>
               </Popover>
               <span className="text-xs text-muted-foreground">{t.dateRangeTo}</span>
@@ -303,14 +339,14 @@ export default function InventoryPage() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={customTo} onSelect={(d) => { setCustomTo(d); setOpenToPicker(false); }} disabled={customFrom ? { before: customFrom } : undefined} />
+                  <Calendar mode="single" selected={customTo} onSelect={(d) => { setCustomTo(d); setOpenToPicker(false); setPage(1); }} disabled={customFrom ? { before: customFrom } : undefined} />
                 </PopoverContent>
               </Popover>
               {(customFrom || customTo) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => { setCustomFrom(undefined); setCustomTo(undefined); }}
+                  onClick={() => { setCustomFrom(undefined); setCustomTo(undefined); setPage(1); }}
                 >
                   {t.clear}
                 </Button>
@@ -320,10 +356,10 @@ export default function InventoryPage() {
         </div>
 
         {/* Customer filter */}
-        <div className="flex items-center gap-3">
+        <div className="shrink-0 flex items-center gap-3">
           <CustomerCombobox
             value={customerFilter}
-            onChange={setCustomerFilter}
+            onChange={(v) => { setCustomerFilter(v); setPage(1); }}
             suggestions={customerNames}
             placeholder={t.filterByCustomer}
             className="max-w-sm flex-1"
@@ -335,7 +371,7 @@ export default function InventoryPage() {
           )}
         </div>
 
-        {/* Sales history table */}
+        {/* Sales history table — fills remaining space */}
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" /> {t.loading}
@@ -348,144 +384,229 @@ export default function InventoryPage() {
             </p>
           </div>
         ) : (
-          <div className="rounded-xl border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead>{t.invoiceNo}</TableHead>
-                  <TableHead>{t.saleDate}</TableHead>
-                  <TableHead>{t.customer}</TableHead>
-                  <TableHead>{t.seller}</TableHead>
-                  <TableHead className="text-right">{t.itemsCount}</TableHead>
-                  <TableHead className="text-right">{t.revenue}</TableHead>
-                  <TableHead className="w-8" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((sale, i) => {
-                  let saleItems: SaleItem[] = [];
-                  try { saleItems = JSON.parse(sale.items_json); } catch { /* skip */ }
-                  const isExpanded = expandedId === sale.$id;
+          <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-border overflow-hidden">
 
-                  return (
-                    <React.Fragment key={sale.$id}>
-                      <TableRow
-                        className={cn(
-                          "cursor-pointer",
-                          i % 2 !== 0 && "bg-muted/10"
-                        )}
-                        onClick={() => toggleExpand(sale.$id)}
-                      >
-                        <TableCell className="font-mono text-xs font-medium">
-                          {sale.invoice_number}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          <span className="whitespace-nowrap">
-                            {new Date(sale.$createdAt).toLocaleDateString(undefined, {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          </span>
-                          <span className="ml-2 text-xs">
-                            {new Date(sale.$createdAt).toLocaleTimeString(undefined, {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {sale.buyer_name ? (
-                            <span className="flex items-center gap-1.5">
-                              <User className="size-3 text-muted-foreground shrink-0" />
-                              {sale.buyer_name}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {sale.seller_name || "—"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {saleItems.reduce((s, i) => s + i.qty_sold, 0)} {t.soldItems}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          L {sale.grand_total.toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {isExpanded ? (
-                            <ChevronUp className="size-4 ml-auto" />
-                          ) : (
-                            <ChevronDown className="size-4 ml-auto" />
-                          )}
-                        </TableCell>
-                      </TableRow>
+            {/* Fixed header */}
+            <div className="shrink-0 border-b">
+              <table className="w-full table-fixed text-sm">
+                <TableCols />
+                <thead>
+                  <tr className="bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.invoiceNo}</th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.saleDate}</th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.customer}</th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">{t.seller}</th>
+                    <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">{t.itemsCount}</th>
+                    <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground">{t.revenue}</th>
+                    <th className="h-10 px-4" />
+                  </tr>
+                </thead>
+              </table>
+            </div>
 
-                      {isExpanded && (
-                        <TableRow className="bg-muted/5 hover:bg-muted/5">
-                          <TableCell colSpan={7} className="px-6 py-4">
-                            {(sale.buyer_name || sale.seller_name) && (
-                              <div className="flex flex-wrap gap-6 mb-3 pb-3 border-b border-border text-xs text-muted-foreground">
-                                {sale.seller_name && (
-                                  <span><span className="font-semibold">{t.soldBy}:</span> {sale.seller_name}</span>
-                                )}
-                                {sale.buyer_name && (
-                                  <span><span className="font-semibold">{t.soldTo}:</span> {sale.buyer_name}</span>
-                                )}
-                              </div>
-                            )}
-                            <div className="flex flex-col gap-1">
-                              {saleItems.map((item, idx) => {
-                                // Fall back to current product data for sales recorded before package support
-                                const currentProduct = productMap[item.product_id];
-                                const isPkg = item.is_package ?? currentProduct?.is_package ?? false;
-                                const piecesPerPkg = item.pieces_per_package ?? currentProduct?.pieces_per_package;
-                                return (
-                                <div
-                                  key={idx}
-                                  className="flex items-center justify-between py-1 text-sm"
-                                >
-                                  <span className="text-foreground">
-                                    {item.product_name}
-                                    {isPkg && (
-                                      <span className="ml-1.5 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
-                                        {t.packageBadge}
-                                      </span>
-                                    )}
-                                    <span className="ml-2 text-xs text-muted-foreground">
-                                      ×{item.qty_sold}
-                                      {isPkg && piecesPerPkg
-                                        ? ` ${t.packageType.toLowerCase()} (${item.qty_sold * piecesPerPkg} ${t.piecesLabel(item.qty_sold * piecesPerPkg).split(" ")[1]})`
-                                        : ""
-                                      }
-                                      {" @ L "}{item.unit_price.toFixed(2)}
-                                      {isPkg ? `/${t.packageType.toLowerCase()}` : ""}
-                                    </span>
-                                  </span>
-                                  <span className="font-medium tabular-nums">
-                                    L {item.total.toFixed(2)}
-                                  </span>
-                                </div>
-                                );
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto">
+              <table className="w-full table-fixed text-sm">
+                <TableCols />
+                <tbody>
+                  {pagedFiltered.map((sale, i) => {
+                    let saleItems: SaleItem[] = [];
+                    try { saleItems = JSON.parse(sale.items_json); } catch { /* skip */ }
+                    const isExpanded = expandedId === sale.$id;
+
+                    return (
+                      <React.Fragment key={sale.$id}>
+                        <tr
+                          className={cn(
+                            "border-b cursor-pointer transition-colors hover:bg-muted/50",
+                            i % 2 !== 0 && "bg-muted/10"
+                          )}
+                          onClick={() => toggleExpand(sale.$id)}
+                        >
+                          <td className="px-4 py-3 font-mono text-xs font-medium">
+                            {sale.invoice_number}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            <span className="whitespace-nowrap">
+                              {new Date(sale.$createdAt).toLocaleDateString(undefined, {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
                               })}
-                              <div className="mt-2 pt-2 border-t border-border">
-                                <div className="flex justify-between text-sm font-bold">
-                                  <span>{t.grandTotal}</span>
-                                  <span>L {sale.grand_total.toFixed(2)}</span>
+                            </span>
+                            <span className="ml-2 text-xs">
+                              {new Date(sale.$createdAt).toLocaleTimeString(undefined, {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {sale.buyer_name ? (
+                              <span className="flex items-center gap-1.5">
+                                <User className="size-3 text-muted-foreground shrink-0" />
+                                {sale.buyer_name}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {sale.seller_name || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            {saleItems.reduce((s, i) => s + i.qty_sold, 0)} {t.soldItems}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold">
+                            L {sale.grand_total.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-muted-foreground">
+                            {isExpanded ? (
+                              <ChevronUp className="size-4 ml-auto" />
+                            ) : (
+                              <ChevronDown className="size-4 ml-auto" />
+                            )}
+                          </td>
+                        </tr>
+
+                        {isExpanded && (
+                          <tr className="border-b bg-muted/5">
+                            <td colSpan={7} className="px-6 py-4">
+                              {(sale.buyer_name || sale.seller_name) && (
+                                <div className="flex flex-wrap gap-6 mb-3 pb-3 border-b border-border text-xs text-muted-foreground">
+                                  {sale.seller_name && (
+                                    <span><span className="font-semibold">{t.soldBy}:</span> {sale.seller_name}</span>
+                                  )}
+                                  {sale.buyer_name && (
+                                    <span><span className="font-semibold">{t.soldTo}:</span> {sale.buyer_name}</span>
+                                  )}
+                                </div>
+                              )}
+                              <div className="flex flex-col gap-1">
+                                {saleItems.map((item, idx) => {
+                                  const currentProduct = productMap[item.product_id];
+                                  const isPkg = item.is_package ?? currentProduct?.is_package ?? false;
+                                  const piecesPerPkg = item.pieces_per_package ?? currentProduct?.pieces_per_package;
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center justify-between py-1 text-sm"
+                                    >
+                                      <span className="text-foreground">
+                                        {item.product_name}
+                                        {isPkg && (
+                                          <span className="ml-1.5 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wide">
+                                            {t.packageBadge}
+                                          </span>
+                                        )}
+                                        <span className="ml-2 text-xs text-muted-foreground">
+                                          ×{item.qty_sold}
+                                          {isPkg && piecesPerPkg
+                                            ? ` ${t.packageType.toLowerCase()} (${item.qty_sold * piecesPerPkg} ${t.piecesLabel(item.qty_sold * piecesPerPkg).split(" ")[1]})`
+                                            : ""
+                                          }
+                                          {" @ L "}{item.unit_price.toFixed(2)}
+                                          {isPkg ? `/${t.packageType.toLowerCase()}` : ""}
+                                        </span>
+                                      </span>
+                                      <span className="font-medium tabular-nums">
+                                        L {item.total.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                                <div className="mt-2 pt-2 border-t border-border">
+                                  <div className="flex justify-between text-sm font-bold">
+                                    <span>{t.grandTotal}</span>
+                                    <span>L {sale.grand_total.toFixed(2)}</span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
+
+        {/* Paginator — always at the bottom */}
+        {!loading && filtered.length > 0 && (
+          <div className="shrink-0 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{t.rowsPerPage}</span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}
+              >
+                <SelectTrigger size="sm" className="w-16">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>
+                {(effectivePage - 1) * pageSize + 1}–{Math.min(effectivePage * pageSize, filtered.length)} of {filtered.length}
+              </span>
+            </div>
+
+            {totalPages > 1 && (
+              <Pagination className="w-auto mx-0">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={effectivePage === 1}
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => {
+                    const showPage =
+                      n === 1 ||
+                      n === totalPages ||
+                      (n >= effectivePage - 1 && n <= effectivePage + 1);
+                    const showLeadingEllipsis = n === effectivePage - 2 && effectivePage - 2 > 1;
+                    const showTrailingEllipsis = n === effectivePage + 2 && effectivePage + 2 < totalPages;
+
+                    if (showLeadingEllipsis || showTrailingEllipsis) {
+                      return (
+                        <PaginationItem key={`ellipsis-${n}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    if (!showPage) return null;
+                    return (
+                      <PaginationItem key={n}>
+                        <PaginationLink
+                          isActive={n === effectivePage}
+                          onClick={() => setPage(n)}
+                        >
+                          {n}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={effectivePage === totalPages}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </div>
+        )}
+
       </div>
       )}
     </AppLayout>

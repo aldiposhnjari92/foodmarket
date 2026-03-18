@@ -6,7 +6,7 @@ export const PERMISSIONS = {
   products_edit:    ["admin"],
   products_delete:  ["admin"],
   invoice:          ["admin", "manager", "seller"],
-  inventory:        ["admin", "manager"],
+  inventory:        ["admin", "manager", "seller"],
   customers_view:   ["admin", "manager"],
   customers_add:    ["admin", "manager"],
   customers_edit:   ["admin"],

@@ -41,6 +41,7 @@ interface InvoiceItem {
 export default function InvoicePage() {
   const { t } = useLanguage();
   const { role, userId } = useRole();
+  const isSeller = role === "seller";
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -75,7 +76,7 @@ export default function InvoicePage() {
     month: "2-digit",
     year: "numeric",
   });
-  const invoiceTime = now.toLocaleTimeString("sq-AL", {
+  const invoiceTime = now.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -264,6 +265,10 @@ export default function InvoicePage() {
   const handleConfirmSale = async (andPrint = false) => {
     if (items.length === 0) {
       setError(t.noItemsSelected);
+      return;
+    }
+    if (isSeller && !buyerName.trim()) {
+      setError(t.buyerNameRequired);
       return;
     }
     setError(null);
@@ -651,41 +656,52 @@ export default function InvoicePage() {
 
                     {/* Price */}
                     <TableCell className="text-right">
-                      <div className="flex flex-col items-end print:hidden">
-                        <Input
-                          type="number"
-                          value={getPriceDisplay(item)}
-                          min="0"
-                          step="0.01"
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setRawPrices((prev) => ({ ...prev, [item.product.$id]: val }));
-                            const n = parseFloat(val);
-                            if (!isNaN(n) && val !== "") {
-                              setItems((prev) =>
-                                prev.map((i) =>
-                                  i.product.$id === item.product.$id
-                                    ? { ...i, customPrice: n }
-                                    : i
-                                )
-                              );
-                            }
-                          }}
-                          onBlur={() => commitPrice(item.product.$id)}
-                          className="w-full text-right tabular-nums"
-                        />
-                        {item.customPrice !== undefined && (
-                          <span className="text-xs text-muted-foreground line-through">
-                            L {basePrice(item.product).toFixed(2)}
+                      {isSeller ? (
+                        <span className="text-sm tabular-nums">
+                          L {effectivePrice(item).toFixed(2)}
+                          {item.product.is_package && (
+                            <span className="block text-xs text-muted-foreground">/{t.packageType.toLowerCase()}</span>
+                          )}
+                        </span>
+                      ) : (
+                        <>
+                          <div className="flex flex-col items-end print:hidden">
+                            <Input
+                              type="number"
+                              value={getPriceDisplay(item)}
+                              min="0"
+                              step="0.01"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setRawPrices((prev) => ({ ...prev, [item.product.$id]: val }));
+                                const n = parseFloat(val);
+                                if (!isNaN(n) && val !== "") {
+                                  setItems((prev) =>
+                                    prev.map((i) =>
+                                      i.product.$id === item.product.$id
+                                        ? { ...i, customPrice: n }
+                                        : i
+                                    )
+                                  );
+                                }
+                              }}
+                              onBlur={() => commitPrice(item.product.$id)}
+                              className="w-full text-right tabular-nums"
+                            />
+                            {item.customPrice !== undefined && (
+                              <span className="text-xs text-muted-foreground line-through">
+                                L {basePrice(item.product).toFixed(2)}
+                              </span>
+                            )}
+                            {item.product.is_package && (
+                              <span className="text-xs text-muted-foreground">/{t.packageType.toLowerCase()}</span>
+                            )}
+                          </div>
+                          <span className="hidden print:block text-sm tabular-nums">
+                            L {effectivePrice(item).toFixed(2)}
                           </span>
-                        )}
-                        {item.product.is_package && (
-                          <span className="text-xs text-muted-foreground">/{t.packageType.toLowerCase()}</span>
-                        )}
-                      </div>
-                      <span className="hidden print:block text-sm tabular-nums">
-                        L {effectivePrice(item).toFixed(2)}
-                      </span>
+                        </>
+                      )}
                     </TableCell>
 
                     {/* Total + remove */}
@@ -749,7 +765,7 @@ export default function InvoicePage() {
 
             <button
               onClick={() => handleConfirmSale(true)}
-              disabled={confirming || items.length === 0}
+              disabled={confirming || items.length === 0 || (isSeller && !buyerName.trim())}
               className="flex items-center justify-center gap-2 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Printer className="size-4" />
@@ -758,10 +774,10 @@ export default function InvoicePage() {
 
             <button
               onClick={() => handleConfirmSale(false)}
-              disabled={confirming || items.length === 0}
+              disabled={confirming || items.length === 0 || (isSeller && !buyerName.trim())}
               className={cn(
                 "flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-primary-foreground transition-all",
-                confirming || items.length === 0
+                confirming || items.length === 0 || (isSeller && !buyerName.trim())
                   ? "bg-primary/40 cursor-not-allowed"
                   : "bg-primary hover:bg-primary/90"
               )}

@@ -132,60 +132,62 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div>
-          <h2 className="mb-3 font-semibold">{t.recentlyAdded}</h2>
-          {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> {t.loading}
-            </div>
-          ) : recent.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t.noProductsStart}</p>
-          ) : (
-            <div className="rounded-xl border border-border">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="w-14" />
-                    <TableHead>{t.colName}</TableHead>
-                    <TableHead className="text-right">{t.colPrice}</TableHead>
-                    <TableHead>{t.colDate}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recent.map((product) => (
-                    <TableRow key={product.$id}>
-                      <TableCell>
-                        {product.image_id ? (
-                          <div className="relative size-10 rounded-md overflow-hidden shrink-0">
-                            <Image
-                              src={getProductImageUrl(product.image_id)}
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="size-10 rounded-md bg-muted flex items-center justify-center">
-                            <Package className="size-4 text-muted-foreground" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="text-right">L {product.price.toFixed(2)}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(product.$createdAt).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </TableCell>
+        {role !== "seller" && (
+          <div>
+            <h2 className="mb-3 font-semibold">{t.recentlyAdded}</h2>
+            {loading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" /> {t.loading}
+              </div>
+            ) : recent.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t.noProductsStart}</p>
+            ) : (
+              <div className="rounded-xl border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="w-14" />
+                      <TableHead>{t.colName}</TableHead>
+                      <TableHead className="text-right">{t.colPrice}</TableHead>
+                      <TableHead>{t.colDate}</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </div>
+                  </TableHeader>
+                  <TableBody>
+                    {recent.map((product) => (
+                      <TableRow key={product.$id}>
+                        <TableCell>
+                          {product.image_id ? (
+                            <div className="relative size-10 rounded-md overflow-hidden shrink-0">
+                              <Image
+                                src={getProductImageUrl(product.image_id)}
+                                alt={product.name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="size-10 rounded-md bg-muted flex items-center justify-center">
+                              <Package className="size-4 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell className="text-right">L {product.price.toFixed(2)}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(product.$createdAt).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </AppLayout>
   );

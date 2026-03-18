@@ -11,6 +11,7 @@ export interface Customer {
   email: string;
   address: string;
   notes: string;
+  created_by?: string;  // user_id of whoever added this customer
 }
 
 function toCustomer(row: Models.DefaultRow): Customer {
@@ -22,6 +23,7 @@ function toCustomer(row: Models.DefaultRow): Customer {
     email: (row.email as string) || "",
     address: (row.address as string) || "",
     notes: (row.notes as string) || "",
+    created_by: (row.created_by as string) || undefined,
   };
 }
 
@@ -39,13 +41,16 @@ export async function createCustomer(
   phone: string,
   email: string,
   address: string,
-  notes: string
+  notes: string,
+  createdBy?: string
 ): Promise<Customer> {
+  const data: Record<string, unknown> = { name, phone, email, address, notes };
+  if (createdBy) data.created_by = createdBy;
   const row = await tablesDB.createRow({
     databaseId: DATABASE_ID,
     tableId: CUSTOMERS_TABLE_ID,
     rowId: ID.unique(),
-    data: { name, phone, email, address, notes },
+    data,
   });
   return toCustomer(row);
 }

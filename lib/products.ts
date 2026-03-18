@@ -12,6 +12,7 @@ export interface Product {
   owner_id?: string;
   is_package?: boolean;
   pieces_per_package?: number;
+  created_by?: string;     // user_id of whoever added this product
 }
 
 function toProduct(row: Models.DefaultRow): Product {
@@ -25,6 +26,7 @@ function toProduct(row: Models.DefaultRow): Product {
     owner_id: (row.owner_id as string) || undefined,
     is_package: (row.is_package as boolean) || false,
     pieces_per_package: (row.pieces_per_package as number) || undefined,
+    created_by: (row.created_by as string) || undefined,
   };
 }
 
@@ -55,13 +57,15 @@ export async function createProduct(
   quantity: number = 1,
   ownerId?: string,
   isPackage: boolean = false,
-  piecesPerPackage?: number
+  piecesPerPackage?: number,
+  createdBy?: string
 ): Promise<Product> {
   const data: Record<string, unknown> = { name, price, quantity };
   if (imageId) data.image_id = imageId;
   if (ownerId) data.owner_id = ownerId;
   if (isPackage) { data.is_package = true; }
   if (piecesPerPackage) data.pieces_per_package = piecesPerPackage;
+  if (createdBy) data.created_by = createdBy;
 
   const row = await tablesDB.createRow({
     databaseId: DATABASE_ID,
